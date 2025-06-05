@@ -1,0 +1,116 @@
+//@version=5
+indicator("SMT Divergence", overlay=true, max_lines_count=100, max_labels_count=100)
+
+// ───────────── Inputs ─────────────
+lbL = input.int(5, "Pivot Lookback Left")
+lbR = input.int(5, "Pivot Lookback Right")
+
+// Symbol A
+useSym1    = input(true, 'Comparison Symbol A', inline='symA')
+sym1       = input.symbol('TVC:DXY', '', inline='symA')
+invertSym1 = input.bool(false, 'Invert A', inline='invA')
+
+// Symbol B
+useSym2    = input(true, 'Comparison Symbol B', inline='symB')
+sym2       = input.symbol('FX:USDJPY', '', inline='symB')
+invertSym2 = input.bool(false, 'Invert B', inline='invB')
+
+// Style
+bullDivCss = input.color(#ff1100, 'Swing High (Bear)', group='Style')
+bearDivCss = input.color(#2157f3, 'Swing Low (Bull)', group='Style')
+
+// Dashboard
+showDash  = input(false, 'Show Dashboard', group='Dashboard')
+dashLoc   = input.string('Top Right', 'Location', options=['Top Right', 'Bottom Right', 'Bottom Left'], group='Dashboard')
+textSize  = input.string('Small', 'Text Size', options=['Tiny', 'Small', 'Normal'], group='Dashboard')
+
+// ───────────── Utilities ─────────────
+invert(src, enabled) => enabled ? 1 / src : src
+
+get_divergence(ph, y2, sym_y2, css) =>
+    var float y1 = na
+    var float sym_y1 = na
+    var int x1 = na
+    var int smt = 0
+
+    if y2 != y2[1] and sym_y2 != sym_y2[1]
+        if (y2 - y1) * (sym_y2 - sym_y1) < 0
+            line.new(bar_index[lbR], y2, x1, y1, color=css, width=2)
+            smt += 1
+        sym_y1 := sym_y2
+        y1 := y2
+        x1 := bar_index[lbR]
+    else if (ph and y2 > y2[1]) or (not ph and y2 < y2[1])
+        sym_y1 := na
+        y1 := y2
+        x1 := bar_index[lbR]
+
+    smt
+
+// ───────────── Data Fetch ─────────────
+ph = fixnan(ta.pivothigh(lbL, lbR))
+pl = fixnan(ta.pivotlow(lbL, lbR))
+
+var int phN = 0
+var int plN = 0
+phN += ph != ph[1] ? 1 : 0
+plN += pl != pl[1] ? 1 : 0
+
+// Symbol prices
+h1 = request.security(sym1, timeframe.period, invert(high, invertSym1))
+l1 = request.security(sym1, timeframe.period, invert(low, invertSym1))
+h2 = request.security(sym2, timeframe.period, invert(high, invertSym2))
+l2 = request.security(sym2, timeframe.period, invert(low, invertSym2))
+
+// ───────────── SMT Divergence Logic ─────────────
+var float ph_smt1 = 0, ph_smt2 = 0
+var float pl_smt1 = 0, pl_smt2 = 0
+
+if useSym1
+    sym_ph1 = fixnan(ta.pivothigh(h1, lbL, lbR))
+    sym_pl1 = fixnan(ta.pivotlow(l1, lbL, lbR))
+    ph_smt1 := get_divergence(true, ph, sym_ph1, bullDivCss)
+    pl_smt1 := get_divergence(false, pl, sym_pl1, bearDivCss)
+
+if useSym2
+    sym_ph2 = fixnan(ta.pivothigh(h2, lbL, lbR))
+    sym_pl2 = fixnan(ta.pivotlow(l2, lbL, lbR))
+    ph_smt2 := get_divergence(true, ph, sym_ph2, bullDivCss)
+    pl_smt2 := get_divergence(false, pl, sym_pl2, bearDivCss)
+
+// ───────────── Labels ─────────────
+ticker1 = invertSym1 ? sym1 + " (inv)" : sym1
+ticker2 = invertSym2 ? sym2 + " (inv)" : sym2
+txt = ""
+
+if ph != ph[1]
+    if ph_smt1 > ph_smt1[1]
+        txt += ticker1
+    if ph_smt2 > ph_smt2[1]
+        txt += (txt != "" ? " | " : "") + ticker2
+    if txt != ""
+        label.new(bar_index[lbR], ph, txt, color=bullDivCss, style=label.style_label_down, textcolor=color.white, size=size.tiny)
+else
+    if pl_smt1 > pl_smt1[1]
+        txt += ticker1
+    if pl_smt2 > pl_smt2[1]
+        txt += (txt != "" ? " | " : "") + ticker2
+    if txt != ""
+        label.new(bar_index[lbR], pl, txt, color=bearDivCss, style=label.style_label_up, textcolor=color.white, size=size.tiny)
+
+// ───────────── Dashboard Table ─────────────
+var table_position = dashLoc == "Bottom Left" ? position.bottom_left : dashLoc == "Top Right" ? position.top_right : position.bottom_right
+var table_size = textSize == "Tiny" ? size.tiny : textSize == "Small" ? size.small : size.normal
+var tb = table.new(table_position, 3, 3, bgcolor=color.rgb(30, 34, 45), border_color=color.rgb(55, 58, 70), border_width=1)
+
+if barstate.isfirst and showDash
+    table.cell(tb, 1, 0, "Swing High", text_color=color.white)
+    table.cell(tb, 2, 0, "Swing Low", text_color=color.white)
+    table.cell(tb, 0, 1, ticker1, text_color=color.white)
+    table.cell(tb, 0, 2, ticker2, text_color=color.white)
+
+if barstate.islast and showDash
+    table.cell(tb, 1, 1, str.format("{0} ({1, number, percent})", ph_smt1, ph_smt1 / phN), text_color=bullDivCss)
+    table.cell(tb, 2, 1, str.format("{0} ({1, number, percent})", pl_smt1, pl_smt1 / plN), text_color=bearDivCss)
+    table.cell(tb, 1, 2, str.format("{0} ({1, number, percent})", ph_smt2, ph_smt2 / phN), text_color=bullDivCss)
+    table.cell(tb, 2, 2, str.format("{0} ({1, number, percent})", pl_smt2, pl_smt2 / plN), text_color=bearDivCss)

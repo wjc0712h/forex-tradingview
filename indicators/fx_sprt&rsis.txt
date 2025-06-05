@@ -1,0 +1,31 @@
+//@version=6
+indicator(title="Support and Resistance", overlay=true, max_bars_back=1000)
+
+// Input parameters
+toggleBreaks = input.bool(true, title="Show Breaks")
+leftBars = input.int(20, title="Left Bars")
+rightBars = input.int(20, title="Right Bars")
+volumeThresh = input.int(20, title="Volume Threshold")
+
+// Pivot calculations
+highUsePivot = fixnan(ta.pivothigh(leftBars, rightBars)[1])
+lowUsePivot = fixnan(ta.pivotlow(leftBars, rightBars)[1])
+
+// Plot support and resistance lines
+r1 = plot(highUsePivot, color= ta.change(highUsePivot) != 0? na : color.black, linewidth=1, offset=-(rightBars+1), title="Resistance")
+s1 = plot(lowUsePivot, color=  ta.change(lowUsePivot) != 0 ? na : color.black, linewidth=1, offset=-(rightBars+1), title="Support")
+
+// Volume oscillator
+short = ta.ema(volume, 5)
+long = ta.ema(volume, 10)
+osc = 100 * (short - long) / long
+
+supportCrossUnder = ta.crossunder(close, lowUsePivot)
+resistanceCrossOver = ta.crossover(close, highUsePivot)
+// For breaks with volume
+plotshape(toggleBreaks and supportCrossUnder and not (open - close < high - open) and osc > volumeThresh, title="Break", text='B', style=shape.labeldown, location=location.abovebar, color=color.black, textcolor=color.white, size=size.tiny)
+plotshape(toggleBreaks and resistanceCrossOver and not(open - low > close - open) and osc > volumeThresh, title="Break", text='B', style=shape.labelup, location=location.belowbar, color=color.black, textcolor=color.white, size=size.tiny)
+
+// Alert conditions
+alertcondition(ta.crossunder(close, lowUsePivot) and osc > volumeThresh, title="Support Broken", message="Support Broken")
+alertcondition(ta.crossover(close, highUsePivot) and osc > volumeThresh, title="Resistance Broken", message="Resistance Broken")

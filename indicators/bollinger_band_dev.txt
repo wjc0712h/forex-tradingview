@@ -1,0 +1,44 @@
+//@version=4
+study("Bollinger Bands Deviation", overlay=true)
+
+// === INPUTS ===
+use_ema = input(false, title="Use EMA?")
+length = input(20, title="Length")
+multiplier = input(2.0, title="Multiplier", step=0.1)
+source = input(close, title="Source", type=input.source)
+
+// === CALCULATE ON CURRENT TIMEFRAME (for plotting only) ===
+mean = use_ema ? ema(source, length) : sma(source, length)
+stdev = stdev(source, length)
+upper = mean + (stdev * multiplier)
+lower = mean - (stdev * multiplier)
+
+plot(upper, title="Upper", color=color.red)
+plot(mean, title="Mean", color=color.blue)
+plot(lower, title="Lower", color=color.green)
+
+// === 1-HOUR TIMEFRAME DATA ===
+src_1h = security(syminfo.tickerid, "60", source)
+open_1h = security(syminfo.tickerid, "60", open)
+close_1h = security(syminfo.tickerid, "60", close)
+mean_1h = use_ema ? security(syminfo.tickerid, "60", ema(source, length)) : security(syminfo.tickerid, "60", sma(source, length))
+stdev_1h = security(syminfo.tickerid, "60", stdev(source, length))
+upper_1h = mean_1h + (stdev_1h * multiplier)
+lower_1h = mean_1h - (stdev_1h * multiplier)
+
+// === SIGNALS BASED ON CLOSED 1-HOUR CANDLE ===
+buySignal = open_1h < lower_1h and close_1h > lower_1h
+sellSignal = open_1h > upper_1h and close_1h < upper_1h
+
+// === TRIGGER ONLY WHEN NEW 1H CANDLE CLOSES ===
+// We fetch the 1H bar time and check if it just changed (means last 1H closed)
+t1h = security(syminfo.tickerid, "60", time)
+new1hCandle = na(t1h[1]) ? false : t1h != t1h[1]
+
+// Only show labels on the last bar of the closed 1H candle
+plotshape(buySignal and new1hCandle, title="Buy (1H Closed)", location=location.belowbar, style=shape.triangleup, color=color.purple,size= size.tiny)
+plotshape(sellSignal and new1hCandle, title="Sell (1H Closed)", location=location.abovebar, style=shape.triangledown, color=color.purple, size= size.tiny)
+
+// === ALERT CONDITIONS ===
+alertcondition(buySignal and new1hCandle, title="Buy Alert (1H Closed)", message="Bollinger Bands Buy Signal (1H Closed Candle)")
+alertcondition(sellSignal and new1hCandle, title="Sell Alert (1H Closed)", message="Bollinger Bands Sell Signal (1H Closed Candle)")

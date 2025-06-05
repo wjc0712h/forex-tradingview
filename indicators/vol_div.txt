@@ -1,0 +1,92 @@
+//@version=6
+indicator("Volume Divergence", overlay=false, format=format.volume)
+
+// === INPUTS ===
+vl1 = input(defval=5, title="First Moving Average length")
+vl2 = input(defval=8, title="Second Moving Average length")
+vl3 = vl1 + vl2
+vl4 = vl2 + vl3
+vl5 = vl3 + vl4
+
+// === WEIGHTED MA CALC ===
+pine_wma(x, y) =>
+    norm = 0.0
+    sum = 0.0
+    for i = 0 to y - 1
+        weight = (y - i) * y
+        norm += weight
+        factor = close[i] < open[i] ? -1 : 1
+        sum += (x[i] * weight * factor)
+    sum / norm
+
+v1 = pine_wma(volume, vl1)
+v2 = pine_wma(v1, vl2)
+v3 = pine_wma(v2, vl3)
+v4 = pine_wma(v3, vl4)
+vol = pine_wma(v4, vl5)
+
+vol_color = vol > 0 ? color.green : color.red
+hline(0, "Baseline", color=color.silver, linewidth=1)
+plot(vol, color=vol_color, linewidth=2, title="Volume Divergence")
+
+// === DIVERGENCE SETTINGS ===
+lbR = input.int(5, "Pivot Lookback Right")
+lbL = input.int(5, "Pivot Lookback Left")
+rangeUpper = input.int(60, "Max Lookback Range")
+rangeLower = input.int(5, "Min Lookback Range")
+plotBull = input.bool(true, "Plot Bullish")
+plotHiddenBull = input.bool(false, "Plot Hidden Bullish")
+plotBear = input.bool(true, "Plot Bearish")
+plotHiddenBear = input.bool(false, "Plot Hidden Bearish")
+
+bearColor = color.red
+bullColor = color.green
+hiddenBullColor = color.new(color.green, 25)
+hiddenBearColor = color.new(color.red, 25)
+textColor = color.white
+noneColor = color.new(color.white, 100)
+
+plFound = not na(ta.pivotlow(vol, lbL, lbR))
+phFound = not na(ta.pivothigh(vol, lbL, lbR))
+
+_inRange(cond) =>
+    bars = ta.barssince(cond)
+    rangeLower <= bars and bars <= rangeUpper
+
+// === REGULAR BULLISH ===
+volHL = vol[lbR] > ta.valuewhen(plFound, vol[lbR], 1) and _inRange(plFound[1])
+priceLL = low[lbR] < ta.valuewhen(plFound, low[lbR], 1)
+bullCond = plotBull and priceLL and volHL and plFound
+
+plot(plFound ? vol[lbR] : na, offset=-lbR, title="Regular Bullish", linewidth=2, color=bullCond ? bullColor : noneColor)
+plotshape(bullCond ? vol[lbR] : na, offset=-lbR, title="Bullish Label", text="Bull", style=shape.labelup, location=location.absolute, color=bullColor, textcolor=textColor)
+
+// === HIDDEN BULLISH ===
+volLL = vol[lbR] < ta.valuewhen(plFound, vol[lbR], 1) and _inRange(plFound[1])
+priceHL = low[lbR] > ta.valuewhen(plFound, low[lbR], 1)
+hiddenBullCond = plotHiddenBull and priceHL and volLL and plFound
+
+plot(plFound ? vol[lbR] : na, offset=-lbR, title="Hidden Bullish", linewidth=2, color=hiddenBullCond ? hiddenBullColor : noneColor)
+plotshape(hiddenBullCond ? vol[lbR] : na, offset=-lbR, title="Hidden Bullish Label", text="H Bull", style=shape.labelup, location=location.absolute, color=bullColor, textcolor=textColor)
+
+// === REGULAR BEARISH ===
+volLH = vol[lbR] < ta.valuewhen(phFound, vol[lbR], 1) and _inRange(phFound[1])
+priceHH = high[lbR] > ta.valuewhen(phFound, high[lbR], 1)
+bearCond = plotBear and priceHH and volLH and phFound
+
+plot(phFound ? vol[lbR] : na, offset=-lbR, title="Regular Bearish", linewidth=2, color=bearCond ? bearColor : noneColor)
+plotshape(bearCond ? vol[lbR] : na, offset=-lbR, title="Bearish Label", text="Bear", style=shape.labeldown, location=location.absolute, color=bearColor, textcolor=textColor)
+
+// === HIDDEN BEARISH ===
+volHH = vol[lbR] > ta.valuewhen(phFound, vol[lbR], 1) and _inRange(phFound[1])
+priceLH = high[lbR] < ta.valuewhen(phFound, high[lbR], 1)
+hiddenBearCond = plotHiddenBear and priceLH and volHH and phFound
+
+plot(phFound ? vol[lbR] : na, offset=-lbR, title="Hidden Bearish", linewidth=2, color=hiddenBearCond ? hiddenBearColor : noneColor)
+plotshape(hiddenBearCond ? vol[lbR] : na, offset=-lbR, title="Hidden Bearish Label", text="H Bear", style=shape.labeldown, location=location.absolute, color=bearColor, textcolor=textColor)
+
+// === ALERTS ===
+alertcondition(bullCond, title="Alert: Regular Bullish Divergence", message="Regular Bullish Divergence detected")
+alertcondition(hiddenBullCond, title="Alert: Hidden Bullish Divergence", message="Hidden Bullish Divergence detected")
+alertcondition(bearCond, title="Alert: Regular Bearish Divergence", message="Regular Bearish Divergence detected")
+alertcondition(hiddenBearCond, title="Alert: Hidden Bearish Divergence", message="Hidden Bearish Divergence detected")
