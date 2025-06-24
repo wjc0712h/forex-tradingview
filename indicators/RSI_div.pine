@@ -1,0 +1,164 @@
+//@version=6
+indicator(title="RSI Divergence", format=format.price)
+
+len = input.int(title="RSI Period", minval=1, defval=14, display=display.data_window)
+src = input(title="RSI Source", defval=close,display=display.data_window)
+
+lbR = input(title="Pivot Lookback Right", defval=5, display=display.data_window)
+lbL = input(title="Pivot Lookback Left", defval=5, display=display.data_window)
+
+rangeUpper = input(title="Max of Lookback Range", defval=60, display=display.data_window)
+rangeLower = input(title="Min of Lookback Range", defval=5, display=display.data_window)
+
+plotBull = input(title="Plot Bullish", defval=true, display=display.data_window)
+plotHiddenBull = input(title="Plot Hidden Bullish", defval=true, display=display.data_window)
+
+plotBear = input(title="Plot Bearish", defval=true, display=display.data_window)
+plotHiddenBear = input(title="Plot Hidden Bearish", defval=true, display=display.data_window)
+
+bearColor = color.red
+bullColor = color.teal
+hiddenBullColor = color.new(color.teal, 50)
+hiddenBearColor = color.new(color.red, 50)
+textColor = color.white
+noneColor = color.new(color.white, 100)
+osc = ta.rsi(src, len)
+
+rsiPlot = plot(osc, title="RSI", linewidth=2, color=color.black)
+hline(50, title="Middle Line", color=color.black, linestyle=hline.style_dotted)
+obLevel = hline(70, title="Overbought", color=color.black, linestyle=hline.style_solid)
+osLevel = hline(30, title="Oversold", color=color.black, linestyle=hline.style_solid)
+midLinePlot = plot(50, color=na, editable=false, display=display.none)
+
+// Gradient fill logic
+fill(rsiPlot, midLinePlot, 100, 70, top_color=color.new(color.red, 0), bottom_color=color.new(color.red, 100), title="Overbought Gradient Fill")
+fill(rsiPlot, midLinePlot, 30, 0, top_color=color.new(color.teal, 100), bottom_color=color.new(color.teal, 0), title="Oversold Gradient Fill")
+
+plFound = na(ta.pivotlow(osc, lbL, lbR)) ? false : true
+phFound = na(ta.pivothigh(osc, lbL, lbR)) ? false : true
+_inRange(cond) =>
+    bars = ta.barssince(cond == true)
+    rangeLower <= bars and bars <= rangeUpper
+
+// Regular Bullish
+inRangePl = _inRange(plFound[1])
+oscHL = osc[lbR] > ta.valuewhen(plFound, osc[lbR], 1) and inRangePl
+priceLL = low[lbR] < ta.valuewhen(plFound, low[lbR], 1)
+bullCondAlert = priceLL and oscHL and plFound
+bullCond = plotBull and bullCondAlert
+
+plot(
+     plFound ? osc[lbR] : na,
+     offset=-lbR,
+     title="Regular Bullish",
+     linewidth=2,
+     color=(bullCond ? bullColor : noneColor),
+     display=display.pane,
+     editable=plotBull
+     )
+
+plotshape(
+     bullCond ? osc[lbR] : na,
+     offset=-lbR,
+     title="Regular Bullish Label",
+     text=" Bull ",
+     style=shape.labelup,
+     location=location.absolute,
+     color=bullColor,
+     textcolor=textColor,
+     editable=plotBull,display=display.none
+     )
+
+// Hidden Bullish
+oscLL = osc[lbR] < ta.valuewhen(plFound, osc[lbR], 1) and inRangePl
+priceHL = low[lbR] > ta.valuewhen(plFound, low[lbR], 1)
+hiddenBullCondAlert = priceHL and oscLL and plFound
+hiddenBullCond = plotHiddenBull and hiddenBullCondAlert
+
+plot(
+     plFound ? osc[lbR] : na,
+     offset=-lbR,
+     title="Hidden Bullish",
+     linewidth=2,
+     color=(hiddenBullCond ? hiddenBullColor : noneColor),
+     display=display.pane,
+     editable=plotHiddenBull
+     )
+
+plotshape(
+     hiddenBullCond ? osc[lbR] : na,
+     offset=-lbR,
+     title="Hidden Bullish Label",
+     text=" H Bull ",
+     style=shape.labelup,
+     location=location.absolute,
+     color=bullColor,
+     textcolor=textColor,
+     editable=plotHiddenBull,display=display.none
+     )
+
+// Regular Bearish
+inRangePh = _inRange(phFound[1])
+oscLH = osc[lbR] < ta.valuewhen(phFound, osc[lbR], 1) and inRangePh
+priceHH = high[lbR] > ta.valuewhen(phFound, high[lbR], 1)
+bearCondAlert = priceHH and oscLH and phFound
+bearCond = plotBear and bearCondAlert
+
+plot(
+     phFound ? osc[lbR] : na,
+     offset=-lbR,
+     title="Regular Bearish",
+     linewidth=2,
+     color=(bearCond ? bearColor : noneColor),
+     display=display.pane,
+     editable=plotBear
+     )
+
+plotshape(
+     bearCond ? osc[lbR] : na,
+     offset=-lbR,
+     title="Regular Bearish Label",
+     text=" Bear ",
+     style=shape.labeldown,
+     location=location.absolute,
+     color=bearColor,
+     textcolor=textColor,
+     editable=plotBear,display=display.none
+     )
+
+// Hidden Bearish
+oscHH = osc[lbR] > ta.valuewhen(phFound, osc[lbR], 1) and inRangePh
+priceLH = high[lbR] < ta.valuewhen(phFound, high[lbR], 1)
+hiddenBearCondAlert = priceLH and oscHH and phFound
+hiddenBearCond = plotHiddenBear and hiddenBearCondAlert
+
+plot(
+     phFound ? osc[lbR] : na,
+     offset=-lbR,
+     title="Hidden Bearish",
+     linewidth=2,
+     color=(hiddenBearCond ? hiddenBearColor : noneColor),
+     display=display.pane,
+     editable=plotHiddenBear
+     )
+
+plotshape(
+     hiddenBearCond ? osc[lbR] : na,
+     offset=-lbR,
+     title="Hidden Bearish Label",
+     text=" H Bear ",
+     style=shape.labeldown,
+     location=location.absolute,
+     color=bearColor,
+     textcolor=textColor,
+     editable=plotHiddenBear,display=display.none
+     )
+
+// ---- ALERT ----
+ALL_SIGNAL = bullCondAlert or hiddenBullCondAlert or bearCondAlert or hiddenBearCondAlert
+REGULAR_SIGNAL = bullCondAlert or bearCondAlert
+HIDDEN_SIGNAL = hiddenBullCondAlert or hiddenBearCondAlert
+
+alertcondition(ALL_SIGNAL, title='RSI Divergence', message="ALL RSI DIVERGENCE SIGNAL")
+alertcondition(REGULAR_SIGNAL, title='Regular RSI Divergence', message="REGULAR RSI DIVERGENCE SIGNAL")
+alertcondition(HIDDEN_SIGNAL, title='Hidden RSI Divergence', message="HIDDEN RSI DIVERGENCE SIGNAL")

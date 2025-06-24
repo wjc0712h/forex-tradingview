@@ -1,0 +1,389 @@
+//@version=6
+indicator("FX sessions", overlay=true, max_labels_count=500, max_boxes_count = 500, max_lines_count = 500)
+
+groupd_     = "Sessions" + "  UTC-7"
+tk          = "Tokyo" + "  Time:"
+lo          = "London" + "  Time:"
+ny          = "New York" + "  Time:"
+si          = "Sydney" + "  Time:"
+
+// ＩＮＰＵＴＳ
+display_mid_range = input.bool(true, "Middle Range", group = "Range")
+extend            = input.bool(false, "Future Range", group = "Range")
+
+show_tokyo          = input.bool(true, tk, inline = "Tokyo", group = groupd_)
+tk_ss               = input.session("1700-0200", "", inline = "Tokyo", group = groupd_)
+tokyo_color         = input.color(color.red, "", inline = "Tokyo", group = groupd_)
+
+show_london         = input.bool(false, lo, inline = "London", group = groupd_)
+lo_ss               = input.session("0000-0900", "", inline = "London", group = groupd_)
+london_color        = input.color(color.green, "", inline = "London", group = groupd_)
+
+show_ny             = input.bool(true, ny, inline = "NY", group = groupd_)
+ny_ss               = input.session("0500-1400", "", inline = "NY", group = groupd_)
+ny_color            = input.color(color.blue, "", inline = "NY", group = groupd_)
+
+show_si             = input.bool(false, si, inline = "Sidney", group = groupd_)
+si_ss               = input.session("1400-2300", "", inline = "Sidney", group = groupd_)
+si_color            = input.color(color.purple, "", inline = "Sidney", group = groupd_)
+
+open_ = request.security(ticker.standard(syminfo.tickerid), timeframe.period, open)
+close_ = request.security(ticker.standard(syminfo.tickerid), timeframe.period, close)
+high_ = request.security(ticker.standard(syminfo.tickerid), timeframe.period, high)
+low_ = request.security(ticker.standard(syminfo.tickerid), timeframe.period, low)
+formatSessionString(sessionStr) =>
+    // Extract start and end times
+    startStr = str.substring(sessionStr, 0, 4)
+    endStr   = str.substring(sessionStr, 5, 9)
+    // Insert colons
+    formattedStart = str.format("{0}:{1}", str.substring(startStr, 0, 2), str.substring(startStr, 2, 4))
+    formattedEnd   = str.format("{0}:{1}", str.substring(endStr, 0, 2), str.substring(endStr, 2, 4))
+    // Combine into final formatted string
+    str.format("{0}-{1}", formattedStart, formattedEnd)
+
+
+in_session(i_sess) =>
+    t = time(timeframe.period, i_sess + ":23456", "UTC-7")
+    time == t
+
+box_session(session, sessionss, display, color)=>
+    sessions   = in_session(sessionss)
+    var boxx = box(na)
+    var mid = line(na)
+
+    // New: extended midline across session gap
+    var line ext_mid = na
+    var line ext_h = na
+    var line ext_l = na
+
+    var labl = label(na)
+
+    var highh = array.new<float>()
+    var loww = array.new<float>()
+    var vol = array.new<float>()
+    var delta = array.new<float>()
+
+
+    // When session changes (start of new session)
+    if sessions and not sessions[1]
+
+        // Clear arrays for new session
+        highh.clear()
+        loww.clear()
+        vol.clear()
+        delta.clear()
+
+        // New box and midline
+        boxx := box.new(bar_index, na, na, na
+                         , bgcolor = color.new(color, 97)
+                         , border_color = color.new(color, 50)
+                         )
+
+        if display_mid_range
+            mid := line.new(bar_index, na, na, na, color = color.new(color, 30))
+        
+        labl := label.new(bar_index, na
+                         , style = label.style_label_upper_left
+                         , color = color(na)
+                         , textcolor = chart.fg_color
+                         , size = size.small
+                         , textalign = text.align_left
+                         )
+
+
+    // During session, update everything
+    if display and sessions  
+   
+        highh.push(high_)
+        loww.push(low_)
+        vol.push(volume)
+        delta.push(close_ > open_ ? volume : -volume)
+
+        h = array.max(highh)
+        l = array.min(loww)
+
+        boxx.set_right(bar_index+1)
+        boxx.set_top(h)
+        boxx.set_bottom(l)
+
+        mid_y = (h + l) / 2
+        data = session + ": " + formatSessionString(sessionss) + "\n\n" + "Volume:  " + str.tostring(array.sum(vol), format.volume) + "\n" + "Delta:     " + str.tostring(array.sum(delta), format.volume)
+
+        if display_mid_range
+            mid.set_x2(bar_index+1)
+            mid.set_y1(mid_y)
+            mid.set_y2(mid_y)
+
+        labl.set_y(l)
+        labl.set_text(data)
+
+
+    if extend  
+        if not sessions and sessions[1] 
+            h = array.max(highh)
+            l = array.min(loww)
+
+            mid_y = (h + l) / 2
+            // ext_mid := line.new(bar_index, mid_y, bar_index, mid_y, style=line.style_dashed, color=color.new(color, 30))
+            ext_h := line.new(bar_index, h, bar_index, h, style=line.style_solid, color=color.new(color, 30))
+            ext_l := line.new(bar_index, l, bar_index, l, style=line.style_solid, color=color.new(color, 30))
+
+        if not sessions
+            ext_mid.set_x2(bar_index)
+            ext_h.set_x2(bar_index)
+            ext_l.set_x2(bar_index)
+
+
+// ＰＬＯＴ 
+box_session("Tokyo", tk_ss, show_tokyo, tokyo_color)
+box_session("London", lo_ss, show_london, london_color)
+box_session("New York", ny_ss, show_ny, ny_color)
+box_session("Sydney", si_ss, show_si, si_color)
+
+
+//v1
+//@version=6
+indicator("FX Sessions", overlay = true, max_boxes_count = 200, max_lines_count = 200, max_labels_count = 200)
+
+bool showSessionNames     = input.bool(true, "Show session names")
+bool showSessionTickRange = input.bool(true, "Show tick range for each session")
+bool showSessionAverage   = input.bool(true, "Show average price per session")
+bool showSessionOC        = input.bool(true, "Draw Open/close lines")
+bool showSessionHL        = input.bool(true, "Draw High/Low lines")
+bool overlap              = input.bool(true, "Draw High/Low lines for overlap sessions")
+
+const string FIRST_SESSION_GROUP = "First Session"
+showFirst         = input.bool(true, "Show session", group = FIRST_SESSION_GROUP, display = display.none)
+firstSessionName  = input.string("Tokyo", "Displayed name", group = FIRST_SESSION_GROUP, display = display.none)
+firstSessionTime  = input.session("1700-0200", "Session time", group = FIRST_SESSION_GROUP, display = display.none)
+firstSessionTZ    = input.string("GMT-7", "Session timezone", group = FIRST_SESSION_GROUP, display = display.none)
+firstSessionColor = input.color(color.new(#ff0000, 90), "Session color", group = FIRST_SESSION_GROUP)
+fopenLineColor    = input.color(color.new(#ff0000, 0), "Open/High line color", group = FIRST_SESSION_GROUP)
+fcloseLineColor   = input.color(color.new(#ff0000, 0), "Close/Low line color", group = FIRST_SESSION_GROUP)
+firstHLWidth      = input.int(1, "High/Low Line Width", minval = 1, maxval = 3, group = FIRST_SESSION_GROUP)
+
+const string SECOND_SESSION_GROUP = "Second session"
+showSecond         = input.bool(true, "Show session", group = SECOND_SESSION_GROUP, display = display.none)
+secondSessionName  = input.string("London", "Displayed name", group = SECOND_SESSION_GROUP, display = display.none)
+secondSessionTime  = input.session("0000-0900", "Session time", group = SECOND_SESSION_GROUP, display = display.none)
+secondSessionTZ    = input.string("GMT-7", "Session timezone", group = SECOND_SESSION_GROUP, display = display.none)
+secondSessionColor = input.color(color.new(#00801e, 90), "Session color", group = SECOND_SESSION_GROUP)
+sopenLineColor     = input.color(color.new(#00801e, 0), "Open/High line color", group = SECOND_SESSION_GROUP)
+scloseLineColor    = input.color(color.new(#00801e, 0), "Close/Low line color", group = SECOND_SESSION_GROUP)
+secondHLWidth      = input.int(1, "High/Low Line Width", minval = 1, maxval = 3, group = SECOND_SESSION_GROUP)
+
+const string THIRD_SESSION_GROUP = "Third session"
+showThird         = input.bool(true, "Show session", group = THIRD_SESSION_GROUP, display = display.none)
+thirdSessionName  = input.string("New York", "Displayed name", group = THIRD_SESSION_GROUP, display = display.none)
+thirdSessionTime  = input.session("0500-1400", "Session time", group = THIRD_SESSION_GROUP, display = display.none)
+thirdSessionTZ    = input.string("GMT-7", "Session timezone", group = THIRD_SESSION_GROUP, display = display.none)
+thirdSessionColor = input.color(color.new(#0320ff, 90), "Session color", group = THIRD_SESSION_GROUP)
+topenLineColor     = input.color(color.new(#0320ff, 0), "Open/High line color", group = THIRD_SESSION_GROUP)
+tcloseLineColor    = input.color(color.new(#0320ff, 0), "Close/Low line color", group = THIRD_SESSION_GROUP)
+thirdHLWidth       = input.int(1, "High/Low Line Width", minval = 1, maxval = 3, group = THIRD_SESSION_GROUP)
+
+const string FOURTH_SESSION_GROUP = "Fourth session"
+showFourth         = input.bool(true, "Show session", group = FOURTH_SESSION_GROUP, display = display.none)
+fourthSessionName  = input.string("Sydney", "Displayed name", group = FOURTH_SESSION_GROUP, display = display.none)
+fourthSessionTime  = input.session("1400-2300", "Session time", group = FOURTH_SESSION_GROUP, display = display.none)
+fourthSessionTZ    = input.string("GMT-7", "Session timezone", group = FOURTH_SESSION_GROUP, display = display.none)
+fourthSessionColor = input.color(color.new(#ff0099, 90), "Session color", group = FOURTH_SESSION_GROUP)
+ftopenLineColor    = input.color(color.new(#ff0099, 0), "Open/High line color", group = FOURTH_SESSION_GROUP)
+ftcloseLineColor   = input.color(color.new(#ff0099, 0), "Close/Low line color", group = FOURTH_SESSION_GROUP)
+fourthHLWidth      = input.int(1, "High/Low Line Width", minval = 1, maxval = 3, group = FOURTH_SESSION_GROUP)
+
+type SessionDisplay
+    box   sessionBox
+    label sessionLabel
+    line  openLine
+    line  avgLine
+    line  closeLine
+    line  highLine
+    line  lowLine
+    float sumClose
+    int   numOfBars
+    float sessionHigh
+    float sessionLow
+    int   highIndex
+    int   lowIndex
+
+type SessionInfo
+    color  color
+    string name
+    string session
+    string timezone
+    color openLine
+    color closeLine
+    int    hlLineWidth
+    SessionDisplay active = na
+
+method setName(SessionDisplay this, string name) =>
+    sessionLabel = this.sessionLabel
+    sessionBox = this.sessionBox
+    boxText = array.new<string>()
+    if showSessionTickRange
+        boxText.push("Range: " + str.tostring((sessionBox.get_top() - sessionBox.get_bottom()) / syminfo.mintick, format.mintick))
+    if showSessionAverage
+        boxText.push("Avg: " + str.tostring(this.sumClose / this.numOfBars, format.mintick))
+    if showSessionNames
+        boxText.push(name)
+
+    sessionLabel.set_y(sessionBox.get_bottom())
+    sessionLabel.set_text(array.join(boxText, "\n"))
+
+method createSessionDisplay(SessionInfo this) =>
+    boxColor = this.color
+    opaqueColor = color.new(boxColor, 0)
+    dis = SessionDisplay.new(
+  sessionBox = box.new(bar_index, high, bar_index, low, bgcolor = boxColor, border_color = na),
+  sessionLabel = label.new(bar_index, low, "", style = label.style_label_upper_left, 
+  textalign = text.align_left, textcolor = opaqueColor, color = color(na)),
+  openLine   = showSessionOC ? line.new(bar_index, open, bar_index, open, color = this.openLine, style = line.style_dotted, width = 1) : na,
+  closeLine  = showSessionOC ? line.new(bar_index, close, bar_index, close, color = this.closeLine, style = line.style_dotted, width = 1) : na,
+  highLine   = showSessionHL ? line.new(bar_index, high, bar_index, high, color = this.openLine, style = line.style_solid, width = this.hlLineWidth) : na,
+  lowLine    = showSessionHL ? line.new(bar_index, low, bar_index, low, color = this.closeLine, style = line.style_solid, width = this.hlLineWidth) : na,
+  avgLine    = showSessionAverage ? line.new(bar_index, close, bar_index, close, style = line.style_dotted, width = 2, color = opaqueColor) : na,
+  sumClose   = close,
+  numOfBars  = 1,
+  sessionHigh = high,
+  sessionLow = low,
+  highIndex = bar_index,
+  lowIndex = bar_index
+  )
+    linefill.new(dis.openLine, dis.closeLine, boxColor)
+    dis.setName(this.name)
+    this.active := dis
+
+method updateSessionDisplay(SessionInfo this) =>
+    sessionDisp = this.active
+    sessionBox = sessionDisp.sessionBox
+    openLine = sessionDisp.openLine
+    closeLine = sessionDisp.closeLine
+    highLine = sessionDisp.highLine
+    lowLine = sessionDisp.lowLine
+    avgLine = sessionDisp.avgLine
+    sessionDisp.sumClose += close
+    sessionDisp.numOfBars += 1
+
+    sessionBox.set_top(math.max(sessionBox.get_top(), high))
+    sessionBox.set_bottom(math.min(sessionBox.get_bottom(), low))
+    sessionBox.set_right(bar_index)
+    sessionDisp.setName(this.name)
+    float sessionHigh = sessionBox.get_top()
+    float sessionLow = sessionBox.get_bottom()
+    if high > sessionDisp.sessionHigh
+        sessionDisp.sessionHigh := high
+        sessionDisp.highIndex := bar_index
+    if low < sessionDisp.sessionLow
+        sessionDisp.sessionLow := low
+        sessionDisp.lowIndex := bar_index
+
+    if showSessionOC
+        openLine.set_x2(bar_index)
+        closeLine.set_x2(bar_index)
+        closeLine.set_y1(close)
+        closeLine.set_y2(close)
+
+    int extension = 5
+    if showSessionHL
+        highLine.set_x1(sessionDisp.highIndex)
+        highLine.set_x2(bar_index + extension)
+        highLine.set_y1(sessionDisp.sessionHigh)
+        highLine.set_y2(sessionDisp.sessionHigh)
+
+        lowLine.set_x1(sessionDisp.lowIndex)
+        lowLine.set_x2(bar_index + extension)
+        lowLine.set_y1(sessionDisp.sessionLow)
+        lowLine.set_y2(sessionDisp.sessionLow)
+
+    if showSessionAverage
+        avgLine.set_x2(bar_index)
+        avg = sessionDisp.sumClose / sessionDisp.numOfBars
+        avgLine.set_y1(avg)
+        avgLine.set_y2(avg)
+    sessionDisp
+
+method update(SessionInfo this) =>
+    bool isChange = timeframe.change("1D")
+    if (not na(time("", this.session, this.timezone)))
+        if na(this.active) or isChange
+            this.createSessionDisplay()
+        else
+            this.updateSessionDisplay()
+    else if not na(this.active)
+        this.active := na
+
+
+tokyoSessionTime = firstSessionTime
+londonSessionTime = secondSessionTime
+newyorkSessionTime = thirdSessionTime
+sydneySessionTime = fourthSessionTime
+
+//OverLap
+if overlap
+    //tokyo
+    isFirstSession  = not na(time("", firstSessionTime, firstSessionTZ))
+    //london
+    isSecondSession = not na(time("", secondSessionTime, secondSessionTZ))
+    //new york
+    isThirdSession  = not na(time("", thirdSessionTime, thirdSessionTZ))
+    //sydney
+    isFourthSession = not na(time("", fourthSessionTime, fourthSessionTZ))
+
+    overlapFirstSecond  = isFirstSession and isSecondSession
+    overlapFirstFourth   = isFirstSession and isFourthSession
+    overlapSecondThird  = isSecondSession and isThirdSession
+
+
+    var float overlapHigh = na
+    var float overlapLow  = na
+    var int   overlapStartIndex = na
+
+    if (overlapSecondThird and (showThird and showSecond)) or (overlapFirstSecond and (showFirst and showSecond)) or (overlapFirstFourth and (showFirst and showFourth))
+        overlapHigh := na(overlapHigh) ? high : math.max(overlapHigh, high)
+        overlapLow  := na(overlapLow) ? low : math.min(overlapLow, low)
+        overlapStartIndex := na(overlapStartIndex) ? bar_index : overlapStartIndex
+    else if not na(overlapStartIndex)
+        //sessionBox = box.new(overlapStartIndex, overlapHigh, bar_index, overlapLow, bgcolor = color.rgb(200, 0, 255, 90), border_color = na),
+        line.new(overlapStartIndex, overlapHigh, bar_index+5, overlapHigh, color=color.purple, width=2)
+        line.new(overlapStartIndex, overlapLow,  bar_index+5, overlapLow,  color=color.purple, width=2)
+        overlapHigh := na
+        overlapLow := na
+        overlapStartIndex := na
+
+    //sydney and tokyo
+    //tokyo and london
+    //london and newyork
+// Sydney: 14:00 to 17:00
+    sydneySessionTime := input.session("1400-1700", "Session time", group = FOURTH_SESSION_GROUP, display = display.none)
+
+// Tokyo: 17:00 to 00:00
+    tokyoSessionTime  := input.session("1700-0000", "Session time", group = FIRST_SESSION_GROUP, display = display.none)
+
+// London: 00:00 to 05:00
+    londonSessionTime := input.session("0000-0500", "Session time", group = SECOND_SESSION_GROUP, display = display.none)
+
+// New York: 05:00 to 14:00
+    newyorkSessionTime  := input.session("0500-1400", "Session time", group = THIRD_SESSION_GROUP, display = display.none)
+
+    
+getSessionInfos() =>
+    array<SessionInfo> sessionInfos = array.new<SessionInfo>()
+    if showFourth
+        sessionInfos.push(SessionInfo.new(fourthSessionColor, fourthSessionName, sydneySessionTime, fourthSessionTZ, ftopenLineColor, ftcloseLineColor, fourthHLWidth))
+    if showThird
+        sessionInfos.push(SessionInfo.new(thirdSessionColor, thirdSessionName, newyorkSessionTime, thirdSessionTZ, topenLineColor, tcloseLineColor, thirdHLWidth))
+    if showSecond
+        sessionInfos.push(SessionInfo.new(secondSessionColor, secondSessionName, londonSessionTime, secondSessionTZ, sopenLineColor, scloseLineColor, secondHLWidth))
+    if showFirst
+        sessionInfos.push(SessionInfo.new(firstSessionColor, firstSessionName, tokyoSessionTime, firstSessionTZ, fopenLineColor, fcloseLineColor, firstHLWidth))
+    sessionInfos
+
+var array<SessionInfo> sessionInfos = getSessionInfos()
+if timeframe.isdwm
+    runtime.error("This indicator can only be used on intraday timeframes.")
+
+for info in sessionInfos
+    info.update()
+
+

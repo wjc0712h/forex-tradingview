@@ -1,0 +1,77 @@
+//@version=6
+indicator("Bollinger Bands Deviation", shorttitle="BBD", overlay=true)
+
+session = input.session("24/7", "Trading Session", options=["london-newyork", "sidney-tokyo", "24/7"], group="Session",display=display.all-display.status_line)
+trading_session = session == "london-newyork" ? "0300-1700" :
+                  session == "sidney-tokyo" ? "1700-0500" : 
+                  session == "24/7" ? "0000-0000" :
+                  session
+t = time(timeframe.period, trading_session)
+bgcolor(title = "session", color = time == t ? color.rgb(190, 190, 190, 87) : na, display = display.none)
+
+hf_timeframe = input.timeframe("240", title="DI Timeframe")
+di_len = input.int(72, "EMA Length")
+di_min = input.float(0.03, "DI min")
+di_max = input.float(3, "DI max")
+
+// === INPUTS ===
+use_ema = input.bool(false, title="Use EMA",display=display.all-display.status_line)
+length = input.int(20, title="Length",display=display.all-display.status_line)
+multiplier = input.float(2.0, title="Multiplier", step=0.1,display=display.all-display.status_line)
+source = input.source(close, title="Source",display=display.all-display.status_line)
+tf_option = input.string("Chart", title="Time Frame", options=["Chart", "5", "10","9", "15", "30", "1hr", "4hr", "D"],display=display.all-display.status_line)
+
+// === CALCULATIONS ===
+mean = use_ema ? ta.ema(source, length) : ta.sma(source, length)
+stdev = ta.stdev(source, length)
+upper = mean + (stdev * multiplier)
+lower = mean - (stdev * multiplier)
+
+// === TIMEFRAME ===
+tf = tf_option == "Chart" ? timeframe.period : tf_option == "1hr" ? "60" : tf_option == "4hr" ? "240" : tf_option == "D" ? "D" : tf_option
+
+// === HIGHER TIMEFRAME DATA ===
+src_ = request.security(syminfo.tickerid, tf, source)
+open_ = request.security(syminfo.tickerid, tf, open)
+close_ = request.security(syminfo.tickerid, tf, close)
+mean_ = use_ema ? request.security(syminfo.tickerid, tf, ta.ema(src_, length)) : request.security(syminfo.tickerid, tf, ta.sma(src_, length))
+stdev_ = request.security(syminfo.tickerid, tf, ta.stdev(src_, length))
+upper_ = mean_ + (stdev_ * multiplier)
+lower_ = mean_ - (stdev_ * multiplier)
+
+// === PLOTS ===
+plot(mean_, title="Mean", color=color.green, display = display.none)
+p1 = plot(upper_, title="Upper", color=color.rgb(76, 175, 79, 80))
+p2 = plot(lower_, title="Lower", color=color.rgb(76, 175, 79, 80))
+
+
+hf_open = request.security(syminfo.tickerid, hf_timeframe, open, lookahead=barmerge.lookahead_on)
+hf_close = request.security(syminfo.tickerid, hf_timeframe, close, lookahead=barmerge.lookahead_on)
+ema_val = ta.ema(hf_close, di_len)
+dist = hf_close - ema_val
+percent_dist = (dist / ema_val) * 100
+
+bull_di = percent_dist > di_min and percent_dist < di_max
+bear_di = percent_dist < -di_min and percent_dist > -di_max
+
+// === SIGNALS ===
+buySignal = open < lower_ and close > lower_ and not na(t) and bull_di
+sellSignal = open > upper_ and close < upper_ and not na(t) and bear_di
+
+t_ = request.security(syminfo.tickerid, tf, time)
+newCandle = na(t_[1]) ? false : t_ != t_[1]
+
+// === Squeeze Detection ===
+bb_width = (upper_ - lower_) / mean_
+bb_width_ma = ta.ema(bb_width, 100)
+squeeze = bb_width < (bb_width_ma * 0.5)
+
+squeezeColor = squeeze ? color.rgb(76, 175, 79, 80) : na
+fill(p1, p2, title="Squeeze Background", color=squeezeColor)
+// === PLOT SHAPES ===
+plotshape(buySignal and newCandle, title="Buy", location=location.belowbar, style=shape.triangleup, color=color.teal, size=size.tiny)
+plotshape(sellSignal and newCandle, title="Sell", location=location.abovebar, style=shape.triangledown, color=color.teal, size=size.tiny)
+// === ALERT CONDITIONS ===
+alertcondition((buySignal or sellSignal) and newCandle, title="BUY OR SELL ALERT", message="Bollinger Bands Deviation Signal")
+alertcondition(buySignal and newCandle, title="BUY ALERT", message="Bollinger Bands Deviation Buy Signal")
+alertcondition(sellSignal and newCandle, title="SELL ALERT", message="Bollinger Bands Deviation Sell Signal")

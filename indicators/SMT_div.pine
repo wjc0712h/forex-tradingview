@@ -1,0 +1,112 @@
+//@version=6
+indicator("SMT Divergence", overlay=true, max_lines_count=100, max_labels_count=100)
+
+// ───────────── Inputs ─────────────
+// Pivot Settings
+lbL = input.int(3, "Pivot Lookback Left", group="Pivot Settings", display = display.all - display.status_line)
+lbR = input.int(6, "Pivot Lookback Right", group="Pivot Settings", display = display.all - display.status_line)
+minDivStrength = input.float(0.0, "Min Divergence Strength (%)", minval=0, step=0.1, group="Pivot Settings", display = display.all - display.status_line)
+
+// Symbol A
+useSym1 = input(true, 'Symbol A', group="Symbol A", display = display.all - display.status_line)
+sym1 = input.symbol('TVC:DXY', '', group="Symbol A", display = display.all - display.status_line)
+sym1_tf = input.timeframe('', "Symbol A Timeframe", group="Symbol A", display = display.all - display.status_line)
+invertSym1 = input.bool(false, 'Invert A', group="Symbol A", display = display.all - display.status_line)
+
+// Symbol B
+useSym2 = input(true, 'Symbol B', group="Symbol B", display = display.all - display.status_line)
+sym2 = input.symbol('OANDA:GBPUSD', '', group="Symbol B", display = display.all - display.status_line)
+sym2_tf = input.timeframe('', "Symbol B Timeframe", group="Symbol B", display = display.all - display.status_line)
+invertSym2 = input.bool(false, 'Invert B', group="Symbol B", display = display.all - display.status_line)
+
+// Style
+bullDivCss = input.color(color.black, 'Bearish', group='Style', display = display.all - display.status_line)
+bearDivCss = input.color(color.black, 'Bullish', group='Style', display = display.all - display.status_line)
+width_line = input.int(1,title = "Line Width", group = "Style", display = display.all - display.status_line)
+labelSize = input.string('Tiny', 'Label Size', options=['Tiny', 'Small'], group='Style', display = display.all - display.status_line)
+
+// ───────────── Utilities ─────────────
+invert(src, enabled) => enabled ? 1 / src : src
+
+// Modularized divergence detection for bullish and bearish cases
+get_divergence(ph, y2, sym_y2, css, min_strength) =>
+    var float y1 = na
+    var float sym_y1 = na
+    var int x1 = na
+    var int smt = 0
+    idx = bar_index[lbR]
+    // Check for new pivot and divergence
+    if y2 != y2[1] and sym_y2 != sym_y2[1]
+        price_diff = not na(y1) ? math.abs((y2 - y1) / y1 * 100) : 0
+        if (y2 - y1) * (sym_y2 - sym_y1) < 0 and price_diff >= min_strength
+            line.new(idx, y2, x1, y1, color=css, width=width_line)
+            smt += 1
+        sym_y1 := sym_y2
+        y1 := y2
+        x1 := idx
+    // Reset if new high/low is detected
+    else if (ph and y2 > y2[1]) or (not ph and y2 < y2[1])
+        sym_y1 := na
+        y1 := y2
+        x1 := idx
+    smt
+
+// ───────────── Data Fetch ─────────────
+// Fetch and clean pivot data
+ph = fixnan(ta.pivothigh(lbL, lbR))
+pl = fixnan(ta.pivotlow(lbL, lbR))
+
+var int phN = 0
+var int plN = 0
+phN := ph != ph[1] ? phN + 1 : phN
+plN := pl != pl[1] ? plN + 1 : plN
+
+// Fetch symbol prices with custom timeframes
+tf1 = sym1_tf == '' ? timeframe.period : sym1_tf
+tf2 = sym2_tf == '' ? timeframe.period : sym2_tf
+h1 = request.security(sym1, tf1, invert(high, invertSym1))
+l1 = request.security(sym1, tf1, invert(low, invertSym1))
+h2 = request.security(sym2, tf2, invert(high, invertSym2))
+l2 = request.security(sym2, tf2, invert(low, invertSym2))
+
+// ───────────── SMT Divergence Logic ─────────────
+var float ph_smt1 = 0, ph_smt2 = 0
+var float pl_smt1 = 0, pl_smt2 = 0
+
+if useSym1
+    sym_ph1 = fixnan(ta.pivothigh(h1, lbL, lbR))
+    sym_pl1 = fixnan(ta.pivotlow(l1, lbL, lbR))
+    ph_smt1 := get_divergence(true, ph, sym_ph1, bullDivCss, minDivStrength)
+    pl_smt1 := get_divergence(false, pl, sym_pl1, bearDivCss, minDivStrength)
+
+if useSym2
+    sym_ph2 = fixnan(ta.pivothigh(h2, lbL, lbR))
+    sym_pl2 = fixnan(ta.pivotlow(l2, lbL, lbR))
+    ph_smt2 := get_divergence(true, ph, sym_ph2, bullDivCss, minDivStrength)
+    pl_smt2 := get_divergence(false, pl, sym_pl2, bearDivCss, minDivStrength)
+
+// ───────────── Labels ─────────────
+ticker1 = invertSym1 ? sym1 + " (inv)" : sym1
+ticker2 = invertSym2 ? sym2 + " (inv)" : sym2
+txt = ""
+label_size = labelSize == 'Tiny' ? size.tiny : labelSize == 'Small' ? size.small : size.normal
+
+if ph != ph[1]
+    if ph_smt1 > ph_smt1[1]
+        txt += ticker1
+    if ph_smt2 > ph_smt2[1]
+        txt += (txt != "" ? " | " : "") + ticker2
+    if txt != ""
+        label.new(bar_index[lbR], ph, txt, color=bullDivCss, style=label.style_label_down, textcolor=color.white, size=label_size)
+else if pl != pl[1]
+    if pl_smt1 > pl_smt1[1]
+        txt += ticker1
+    if pl_smt2 > pl_smt2[1]
+        txt += (txt != "" ? " | " : "") + ticker2
+    if txt != ""
+        label.new(bar_index[lbR], pl, txt, color=bearDivCss, style=label.style_label_up, textcolor=color.white, size=label_size)
+        
+// ───────────── Alerts ─────────────
+alertcondition(((ph_smt1 > ph_smt1[1]) or (ph_smt2 > ph_smt2[1])) or ((pl_smt1 > pl_smt1[1]) or (pl_smt2 > pl_smt2[1])), title="SMT Divergence",message = "SMT Divergence Signal")
+alertcondition((ph_smt1 > ph_smt1[1]) or (ph_smt2 > ph_smt2[1]), title="SMT Bearish Divergence",message = "SMT Divergence Bearish Signal")
+alertcondition((pl_smt1 > pl_smt1[1]) or (pl_smt2 > pl_smt2[1]), title="SMT Bullish Divergence",message = "SMT Divergence Bullish Signal")

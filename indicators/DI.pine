@@ -1,0 +1,63 @@
+// This Pine Script® code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
+// © cdw1432t
+
+//@version=6
+indicator("DI")
+
+
+hf_timeframe = input.timeframe("240", title="Higher Timeframe")
+di_len = input.int(72, "EMA Length")
+di_min = input.float(0.03, "DI min")
+di_max = input.float(3, "DI max")
+var bool is_label = input.bool(false)
+hf_ha_close = request.security(syminfo.tickerid, hf_timeframe, close, lookahead = barmerge.lookahead_on)
+
+// DI
+ema_val = ta.ema(hf_ha_close, di_len)
+dist = hf_ha_close - ema_val
+percent_dist = (dist / ema_val) * 100
+
+
+body_area_above = close > ema_val ? close - ema_val : 0
+body_area_below = close < ema_val ? ema_val - close : 0
+
+var float area_sum_above = na
+var float area_sum_below = na
+area_sum_above := nz(area_sum_above)
+area_sum_below := nz(area_sum_below)
+
+// === AREA UP
+if close > ema_val
+    area_sum_above += body_area_above
+else
+    if area_sum_above > 0 and is_label
+        label.new(bar_index,low,text = str.tostring(area_sum_above*1000, "##.##"),style = label.style_label_up,color = color.new(color.green, 0),textcolor = color.white)
+    area_sum_above := 0.0
+
+// === AREA DOWN
+if close < ema_val
+    area_sum_below += body_area_below
+else
+    if area_sum_below > 0 and is_label
+        label.new(bar_index,high,text = str.tostring(area_sum_below*1000, "##.##"), style = label.style_label_down,color = color.new(color.red, 0),textcolor = color.white)
+    area_sum_below := 0.0
+
+p_close = plot(close, title="Close", color=color.new(color.blue, 0), style=plot.style_linebr, display = display.none)
+p_ema = plot(ema_val, title="EMA", color=color.new(color.red, 0))
+
+fill(p_close, p_ema, color = close > ema_val ? color.new(color.green, 85) : color.new(color.red, 85))
+
+// di_mid = input.float(0.25, "DI mid")
+// di_mid2 = input.float(0.3, "DI mid2")
+// bull_di = (di_min <= percent_dist and percent_dist <= di_mid) or (di_mid2 <= percent_dist and percent_dist <= di_max) 
+// bear_di = (-di_max <= percent_dist  and percent_dist <= -di_mid2) or (-di_mid <= percent_dist and percent_dist <= -di_min)
+bull_di = (di_min <= percent_dist and percent_dist <= di_max) 
+bear_di = (-di_max <= percent_dist and percent_dist <= -di_min)
+
+// bull_reversal = bull_di
+// bear_reversal = bear_di
+area_threshold = input.float(0.5, title="Area Threshold (x1000)")
+bull_reversal = bull_di and area_sum_below * 1000 > area_threshold
+bear_reversal = bear_di and area_sum_above * 1000 > area_threshold
+plotshape(bull_reversal , title="Buy Signal", location=location.belowbar, style=shape.circle, color=color.purple, size=size.tiny)
+plotshape(bear_reversal , title="Buy Signal", location=location.belowbar, style=shape.circle, color=color.purple, size=size.tiny)
