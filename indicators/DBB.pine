@@ -52,8 +52,8 @@ main_tf_res = main_tf == "Chart" ? timeframe.period :
               main_tf == "D" ? "D" :
               main_tf
 
-basis = request.security(syminfo.tickerid, main_tf_res, ma(src, length, maType))
-dev = mult * request.security(syminfo.tickerid, main_tf_res, ta.stdev(src, length))
+basis = request.security(syminfo.tickerid, main_tf_res, ma(src, length, maType),lookahead=barmerge.lookahead_off)
+dev = mult * request.security(syminfo.tickerid, main_tf_res, ta.stdev(src, length),lookahead=barmerge.lookahead_off)
 upper = basis + dev
 lower = basis - dev
 
@@ -84,8 +84,8 @@ sub_tf_res = sub_tf == "Chart" ? timeframe.period :
              sub_tf == "D" ? "D" :
              sub_tf
 
-basis_ = request.security(syminfo.tickerid, sub_tf_res, ma(src_, length_, maType_))
-dev_ = mult_ * request.security(syminfo.tickerid, sub_tf_res, ta.stdev(src_, length_))
+basis_ = request.security(syminfo.tickerid, sub_tf_res, ma(src_, length_, maType_),lookahead=barmerge.lookahead_off)
+dev_ = mult_ * request.security(syminfo.tickerid, sub_tf_res, ta.stdev(src_, length_),lookahead=barmerge.lookahead_off)
 upper_ = basis_ + dev_
 lower_ = basis_ - dev_
 
@@ -121,17 +121,8 @@ squeeze = bb_width < (bb_width_ma * 0.5)
 squeezeColor = squeeze ? color.new(color.rgb(33, 149, 243), 80) : na
 fill(p1, p2, title="Squeeze Background", color=squeezeColor)
 
-hf_open = request.security(syminfo.tickerid, hf_timeframe, open, lookahead=barmerge.lookahead_on)
-hf_close = request.security(syminfo.tickerid, hf_timeframe, close, lookahead=barmerge.lookahead_on)
-ema_val = ta.ema(hf_close, di_len)
-dist = hf_close - ema_val
-percent_dist = (dist / ema_val) * 100
-
-bull_di = percent_dist > di_min and percent_dist < di_max
-bear_di = percent_dist < -di_min and percent_dist > -di_max
-
-buySignal = touches_lower and signal_close > main_lower_signal and not na(t) and bull_di
-sellSignal = touches_upper and signal_close < main_upper_signal  and not na(t) and bear_di
+buySignal = touches_lower and signal_close > main_lower_signal and not na(t) 
+sellSignal = touches_upper and signal_close < main_upper_signal  and not na(t)
 
 // Plot signals
 plotshape(buySignal , title="Buy Signal", location=location.belowbar, style=shape.triangleup, color=color.purple, size=size.tiny)

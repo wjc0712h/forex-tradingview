@@ -1,57 +1,120 @@
 // @version=6
-indicator("Heikin Ashi", overlay=true, max_labels_count=500)
+indicator("HA", overlay=true, max_labels_count=500)
 
 // === INPUTS ===
-ha_timeframe = input.timeframe("3", title="Timeframe")
-hf_timeframe = input.timeframe("240", title="Higher Timeframe")
-di_len = input.int(72, "EMA Length")
-di_min = input.float(0.03, "DI min")
-di_max = input.float(3, "DI max")
-// === HEIKIN ASHI VALUES ===
+ha_timeframe = input.timeframe("1", title="Timeframe")
+hf_timeframe = input.timeframe("9", title="Higher Timeframe")
 ha_ticker = ticker.heikinashi(syminfo.tickerid)
-ha_open = request.security(ha_ticker, ha_timeframe, open)
-ha_close = request.security(ha_ticker, ha_timeframe, close)
-ha_high = request.security(ha_ticker, ha_timeframe, high)
-ha_low = request.security(ha_ticker, ha_timeframe, low)
 
-// Higher Timeframe Heikin Ashi
-hf_ha_open = request.security(ha_ticker, hf_timeframe, open, lookahead=barmerge.lookahead_on)
-hf_ha_close = request.security(ha_ticker, hf_timeframe, close, lookahead=barmerge.lookahead_on)
+ha_open = request.security(ha_ticker, ha_timeframe, open, lookahead=barmerge.lookahead_off)
+ha_close = request.security(ha_ticker, ha_timeframe, close, lookahead=barmerge.lookahead_off)
+ha_high = request.security(ha_ticker, ha_timeframe, high, lookahead=barmerge.lookahead_off)
+ha_low = request.security(ha_ticker, ha_timeframe, low, lookahead=barmerge.lookahead_off)
 
-hf_open = request.security(syminfo.tickerid, hf_timeframe, open, lookahead=barmerge.lookahead_on)
-hf_close = request.security(syminfo.tickerid, hf_timeframe, close, lookahead=barmerge.lookahead_on)
+hf_open = request.security(syminfo.tickerid, hf_timeframe, open, lookahead=barmerge.lookahead_off)
+hf_close = request.security(syminfo.tickerid, hf_timeframe, close, lookahead=barmerge.lookahead_off)
+
+hf_ha_open  = request.security(ha_ticker, hf_timeframe, open, lookahead=barmerge.lookahead_off)
+hf_ha_open1 = request.security(ha_ticker, hf_timeframe, open[1], lookahead=barmerge.lookahead_off)
+hf_ha_open2 = request.security(ha_ticker, hf_timeframe, open[2], lookahead=barmerge.lookahead_off)
+hf_ha_open3 = request.security(ha_ticker, hf_timeframe, open[3], lookahead=barmerge.lookahead_off)
+hf_ha_open4 = request.security(ha_ticker, hf_timeframe, open[4], lookahead=barmerge.lookahead_off)
+hf_ha_open5 = request.security(ha_ticker, hf_timeframe, open[5], lookahead=barmerge.lookahead_off)
+
+hf_ha_close  = request.security(ha_ticker, hf_timeframe, close, lookahead=barmerge.lookahead_off)
+hf_ha_close1 = request.security(ha_ticker, hf_timeframe, close[1], lookahead=barmerge.lookahead_off)
+hf_ha_close2 = request.security(ha_ticker, hf_timeframe, close[2], lookahead=barmerge.lookahead_off)
+hf_ha_close3 = request.security(ha_ticker, hf_timeframe, close[3], lookahead=barmerge.lookahead_off)
+hf_ha_close4 = request.security(ha_ticker, hf_timeframe, close[4], lookahead=barmerge.lookahead_off)
+hf_ha_close5 = request.security(ha_ticker, hf_timeframe, close[5], lookahead=barmerge.lookahead_off)
+
+// 트렌드 감지 함수
+f_detect_trend(_open, _open1, _open2, _open3,_open4,_open5, _close, _close1, _close2, _close3,_close4,_close5) =>
+    bull_trend = _close1 > _open1 and _close2 > _open2 and _close3 > _open3
+    bear_trend = _close1 < _open1 and _close2 < _open2 and _close3 < _open3
+    [bull_trend, bear_trend]
+
+// 실행
+[hf_bull_trend, hf_bear_trend] = f_detect_trend(hf_ha_open, hf_ha_open1, hf_ha_open2, hf_ha_open3,hf_ha_open4,hf_ha_open5,hf_ha_close, hf_ha_close1, hf_ha_close2, hf_ha_close3,hf_ha_close4,hf_ha_close5)
 
 f_detect_color_reversal(ha_open, ha_close) =>
-    bull_reversal = ha_close > ha_open and ha_close[1] < ha_open[1] and ha_close[2] < ha_open[2] and  ha_close[3] < ha_open[3]
+    bull_reversal = ha_close > ha_open and ha_close[1] < ha_open[1] and ha_close[2] < ha_open[2] and ha_close[2] < ha_open[2]
     bear_reversal = ha_close < ha_open and ha_close[1] > ha_open[1] and ha_close[2] > ha_open[2] and ha_close[3] > ha_open[3]
     [bull_reversal, bear_reversal]
 
-f_higher_tf_trend(hf_ha_open, hf_ha_close) =>
-    bull_trend = hf_ha_close > hf_ha_open
-    bear_trend = hf_ha_close < hf_ha_open
-    [bull_trend, bear_trend]
 
-// Color Reversal
 [bull_color_reversal, bear_color_reversal] = f_detect_color_reversal(ha_open, ha_close)
 
-// Higher Timeframe Trend
-[hf_bull_trend, hf_bear_trend] = f_higher_tf_trend(hf_ha_open, hf_ha_close)
 
-// DI
-ema_val = ta.ema(hf_close, di_len)
-dist = hf_close - ema_val
-percent_dist = (dist / ema_val) * 100
+ha_buySignal = hf_bull_trend  and bull_color_reversal
+ha_sellSignal = hf_bear_trend and bear_color_reversal
+// === Inputs ===
+Periods = input.int(10, title="ATR Period")
+Multiplier = input.float(3.0, title="ATR Multiplier", step=0.1)
+changeATR = input.bool(true, title="Change ATR Calculation Method")
+use_htf = input.bool(true, title="Use Higher Timeframe ATR")
+htf_tf = input.timeframe("240", title="Higher Timeframe for ATR")
 
-bull_di = percent_dist > di_min and percent_dist < di_max
-bear_di = percent_dist < -di_min and percent_dist > -di_max
+src = input.source(hl2, title="Source")
 
-bull_reversal = bull_color_reversal and bull_di and hf_bull_trend
-bear_reversal = bear_color_reversal and bear_di and hf_bear_trend
+// === ATR Calculation ===
+atr_basic = changeATR ? ta.atr(Periods) : ta.sma(ta.tr, Periods)
 
-plotshape(bull_reversal, title="Bullish Reversal", style=shape.cross, location=location.belowbar, color=color.blue, size=size.tiny)
-plotshape(bear_reversal, title="Bearish Reversal", style=shape.cross, location=location.abovebar, color=color.blue, size=size.tiny)
+// Higher Timeframe ATR
+atr_htf = request.security(syminfo.tickerid, htf_tf, atr_basic, lookahead=barmerge.lookahead_off)
+atr_final = use_htf ? atr_htf : atr_basic
+
+// === SuperTrend Calculations ===
+up = src - (Multiplier * atr_final)
+dn = src + (Multiplier * atr_final)
+
+up1 = nz(up[1], up)
+dn1 = nz(dn[1], dn)
+
+up := close[1] > up1 ? math.max(up, up1) : up
+dn := close[1] < dn1 ? math.min(dn, dn1) : dn
+
+var trend = 1
+trend := nz(trend[1], 1)
+trend := (trend == -1 and close > dn1) ? 1 : (trend == 1 and close < up1) ? -1 : trend
+
+// === Plot ===
+upPlot = plot(trend == 1 ? up : na, title="Up Trend", style=plot.style_linebr, linewidth=2, color=color.green, display = display.none)
+dnPlot = plot(trend == -1 ? dn : na, title="Down Trend", style=plot.style_linebr, linewidth=2, color=color.red, display = display.none)
+
+mPlot = plot(ohlc4, title="", style=plot.style_circles, linewidth=1, display = display.none)
+
+// === Fills ===
+// longFillColor = highlighting ? (trend == 1 ? color.new(color.green, 80) : na) : na
+// shortFillColor = highlighting ? (trend == -1 ? color.new(color.red, 80) : na) : na
+// fill(mPlot, upPlot, title="UpTrend Highlighter", color=longFillColor)
+// fill(mPlot, dnPlot, title="DownTrend Highlighter", color=shortFillColor)
+
+// === Signals ===
+SuperTrendbuy = trend == 1 and trend[1] == -1
+SuperTrendsell = trend == -1 and trend[1] == 1
+SuperTrendup = trend == 1 ? true : false
+SuperTrenddown = trend == -1 ? true : false
+
+// SuperTrend 기준 라인
+supertrend_line = trend == 1 ? up : dn
+gap_percent = (100 * math.abs(close - supertrend_line) / supertrend_line)
+gap_threshold = input.float(0.2, title="Max SuperTrend Gap % for Entry")
+dynamic_gap = atr_final / close * 100  // ATR을 퍼센트로 변환
+gap_filter_pass = gap_percent <= math.max(gap_threshold, dynamic_gap * 0.5)
+// // 괴리율 조건
+// gap_threshold = input.float(0.2, title="Max SuperTrend Gap % for Entry")
+// gap_filter_pass = gap_percent <= gap_threshold
+
+// 최종 신호
+buySignal = ha_buySignal and SuperTrendup and gap_filter_pass
+sellSignal = ha_sellSignal and SuperTrenddown and gap_filter_pass
+
+plotshape(buySignal, title="Bullish Reversal", style=shape.circle, location=location.belowbar, color=color.rgb(0, 140, 255, 100), size=size.tiny)
+plotshape(sellSignal, title="Bearish Reversal", style=shape.circle, location=location.abovebar, color=color.rgb(0, 140, 255, 100), size=size.tiny)
+
 
 // ALERT
-alertcondition(bull_reversal or bear_reversal, title="BUY OR SELL ALERT", message="HA Signal")
-alertcondition(bull_reversal, title="BUY ALERT", message="HA Buy Signal")
-alertcondition(bear_reversal, title="SELL ALERT", message="HA Sell Signal")
+alertcondition(buySignal or sellSignal, title="BUY OR SELL ALERT", message="HA Signal")
+alertcondition(buySignal, title="BUY ALERT", message="HA Buy Signal")
+alertcondition(sellSignal, title="SELL ALERT", message="HA Sell Signal")
