@@ -1,62 +1,92 @@
 //@version=6
 indicator("Bollinger Bands Deviation", shorttitle="BBD", overlay=true)
 
-session = input.session("24/7", "Trading Session", options=["london-newyork", "sidney-tokyo", "24/7"], group="Session",display=display.all-display.status_line)
-trading_session = session == "london-newyork" ? "0300-1700" :
-                  session == "sidney-tokyo" ? "1700-0500" : 
-                  session == "24/7" ? "0000-0000" :
-                  session
-t = time(timeframe.period, trading_session)
-bgcolor(title = "session", color = time == t ? color.rgb(190, 190, 190, 87) : na, display = display.none)
+// === INPUTS: SESSION ===
+session_input = input.session("24/7", "Trading Session", options=["london-newyork", "sidney-tokyo", "24/7"], group="Session")
 
-// === INPUTS ===
-use_ema = input.bool(false, title="Use EMA",display=display.all-display.status_line)
-length = input.int(20, title="Length",display=display.all-display.status_line)
-multiplier = input.float(2.0, title="Multiplier", step=0.1,display=display.all-display.status_line)
-source = input.source(close, title="Source",display=display.all-display.status_line)
-tf_option = input.string("Chart", title="Time Frame", options=["Chart", "5", "10","9", "15", "30", "1hr", "4hr", "D"],display=display.all-display.status_line)
+// Determine the actual TradingView session string
+trading_session_str = switch session_input
+    "london-newyork" => "0300-1700"
+    "sidney-tokyo"   => "1700-0500"
+    "24/7"           => "0000-0000"
+    => session_input // Fallback, though options cover all cases
 
-// === CALCULATIONS ===
-mean = use_ema ? ta.ema(source, length) : ta.sma(source, length)
-stdev = ta.stdev(source, length)
-upper = mean + (stdev * multiplier)
-lower = mean - (stdev * multiplier)
+// Check if current bar falls within the defined session
+is_in_session = not na(time(timeframe.period, trading_session_str))
 
-// === TIMEFRAME ===
-tf = tf_option == "Chart" ? timeframe.period : tf_option == "1hr" ? "60" : tf_option == "4hr" ? "240" : tf_option == "D" ? "D" : tf_option
+// Optional: Background color for session (commented out by default, enable if needed)
+// bgcolor(title = "Session Highlight", color = is_in_session ? color.rgb(190, 190, 190, 87) : na, display = display.none)
 
-// === HIGHER TIMEFRAME DATA ===
-src_ = request.security(syminfo.tickerid, tf, source,lookahead = barmerge.lookahead_off)
-open_ = request.security(syminfo.tickerid, tf, open,lookahead = barmerge.lookahead_off)
-close_ = request.security(syminfo.tickerid, tf, close,lookahead = barmerge.lookahead_off)
-mean_ = use_ema ? request.security(syminfo.tickerid, tf, ta.ema(src_, length)) : request.security(syminfo.tickerid, tf, ta.sma(src_, length),lookahead = barmerge.lookahead_off)
-stdev_ = request.security(syminfo.tickerid, tf, ta.stdev(src_, length),lookahead = barmerge.lookahead_off)
-upper_ = mean_ + (stdev_ * multiplier)
-lower_ = mean_ - (stdev_ * multiplier)
+// === INPUTS: BOLLINGER BANDS ===
+use_ema = input.bool(false, title="Use EMA for MA")
+length = input.int(20, title="Length", minval=1)
+multiplier = input.float(2.0, title="Multiplier", step=0.1, minval=0.1)
+source = input.source(close, title="Source")
+
+// Map input string to actual timeframe string
+bb_timeframe_option = input.string("Chart", title="BB Time Frame", 
+     options=["Chart", "5", "10", "15", "30", "1hr", "4hr", "D", "W", "M"], group="BB Settings") // Added W, M
+bb_timeframe_str = switch bb_timeframe_option
+    "Chart" => timeframe.period
+    "1hr"   => "60"
+    "4hr"   => "240"
+    "D"     => "D"
+    "W"     => "W"
+    "M"     => "M"
+    => bb_timeframe_option // For "5", "10", "15", "30"
+
+// === HIGHER TIMEFRAME BB CALCULATIONS ===
+// Request all necessary data from the higher timeframe in a single security call
+[htf_src, htf_open, htf_close] = request.security(syminfo.tickerid, bb_timeframe_str, [source, open, close], lookahead = barmerge.lookahead_off)
+
+// Calculate mean, standard deviation, and bands for the higher timeframe
+htf_mean = use_ema ? ta.ema(htf_src, length) : ta.sma(htf_src, length)
+htf_stdev = ta.stdev(htf_src, length)
+htf_upper = htf_mean + (htf_stdev * multiplier)
+htf_lower = htf_mean - (htf_stdev * multiplier)
 
 // === PLOTS ===
-plot(mean_, title="Mean", color=color.green, display = display.none)
-p1 = plot(upper_, title="Upper", color=color.rgb(76, 175, 79, 80))
-p2 = plot(lower_, title="Lower", color=color.rgb(76, 175, 79, 80))
+// Plotting the higher timeframe Bollinger Bands
+// Note: Mean is typically a line, Upper/Lower are the bands
+plot(htf_mean, title="Higher TF Mean", color=color.rgb(0, 150, 136), linewidth=1, display = display.all)
+p_upper = plot(htf_upper, title="Higher TF Upper Band", color=color.rgb(76, 175, 79, 80), linewidth=2)
+p_lower = plot(htf_lower, title="Higher TF Lower Band", color=color.rgb(76, 175, 79, 80), linewidth=2)
 
-// === SIGNALS ===
-buySignal = open < lower_ and close > lower_ and not na(t) 
-sellSignal = open > upper_ and close < upper_ and not na(t) 
+// === SQUEEZE DETECTION ===
+// Calculate Bollinger Band Width for the higher timeframe
+htf_bb_width = (htf_upper - htf_lower) / htf_mean
+// Calculate a moving average of the BB width
+htf_bb_width_ma_len = input.int(100, "BB Width MA Length", minval=1, group="Squeeze Settings")
+htf_bb_width_ma = ta.ema(htf_bb_width, htf_bb_width_ma_len)
 
-t_ = request.security(syminfo.tickerid, tf, time)
-newCandle = na(t_[1]) ? false : t_ != t_[1]
+// Squeeze condition: current width is less than a percentage of its moving average
+bb_squeeze = htf_bb_width < (htf_bb_width_ma * input.float(0.5, "Squeeze Threshold (%)", minval=0.1, step=0.1, group="Squeeze Settings"))
 
-// === Squeeze Detection ===
-bb_width = (upper_ - lower_) / mean_
-bb_width_ma = ta.ema(bb_width, 100)
-squeeze = bb_width < (bb_width_ma * 0.5)
+// Fill background when squeeze is detected
+squeeze_color = bb_squeeze ? color.rgb(76, 175, 79, 80) : na
+fill(p_upper, p_lower, title="Squeeze Background", color=squeeze_color)
 
-squeezeColor = squeeze ? color.rgb(76, 175, 79, 80) : na
-fill(p1, p2, title="Squeeze Background", color=squeezeColor)
-// === PLOT SHAPES ===
-plotshape(buySignal and newCandle, title="Buy", location=location.belowbar, style=shape.triangleup, color=color.teal, size=size.tiny)
-plotshape(sellSignal and newCandle, title="Sell", location=location.abovebar, style=shape.triangledown, color=color.teal, size=size.tiny)
+
+// === SIGNAL LOGIC ===
+// Detect if a new candle has opened on the higher timeframe
+// This is critical for non-repainting signals when using request.security with different timeframes
+htf_time = request.security(syminfo.tickerid, bb_timeframe_str, time)
+is_new_htf_candle = not na(htf_time[1]) and htf_time != htf_time[1]
+
+// Buy signal: Current candle opens below lower band and closes above it (bounce)
+// Also ensure it's a new higher timeframe candle and within trading session
+buy_signal = open < htf_lower and close > htf_lower and is_new_htf_candle and is_in_session
+
+// Sell signal: Current candle opens above upper band and closes below it (rejection)
+// Also ensure it's a new higher timeframe candle and within trading session
+sell_signal = open > htf_upper and close < htf_upper and is_new_htf_candle and is_in_session
+
+// === PLOT SHAPES FOR SIGNALS ===
+plotshape(buy_signal, title="Buy Signal", location=location.belowbar, style=shape.triangleup, color=color.teal, size=size.tiny)
+plotshape(sell_signal, title="Sell Signal", location=location.abovebar, style=shape.triangledown, color=color.teal, size=size.tiny)
+
+
 // === ALERT CONDITIONS ===
-alertcondition((buySignal or sellSignal) and newCandle, title="BUY OR SELL ALERT", message="Bollinger Bands Deviation Signal")
-alertcondition(buySignal and newCandle, title="BUY ALERT", message="Bollinger Bands Deviation Buy Signal")
-alertcondition(sellSignal and newCandle, title="SELL ALERT", message="Bollinger Bands Deviation Sell Signal")
+alertcondition(buy_signal, title="BBD Buy Alert", message="Bollinger Bands Deviation Buy Signal Triggered!")
+alertcondition(sell_signal, title="BBD Sell Alert", message="Bollinger Bands Deviation Sell Signal Triggered!")
+alertcondition(buy_signal or sell_signal, title="BBD Any Signal", message="Bollinger Bands Deviation Buy or Sell Signal Triggered!")

@@ -15,11 +15,6 @@ trading_session = session == "london-newyork" ? "0300-1500" :
 t = time(timeframe.period, trading_session)
 bgcolor(title = "session", color = time == t ? color.rgb(190, 190, 190, 87) : na, display = display.none)
 
-hf_timeframe = input.timeframe("240", title="DI Timeframe")
-di_len = input.int(72, "EMA Length")
-di_min = input.float(0.03, "DI min")
-di_max = input.float(3, "DI max")
-
 // === Function for Moving Average ===
 ma(source, length, _type) =>
     switch _type
@@ -62,7 +57,7 @@ p1 = plot(upper, "Main Upper", color=color.rgb(33, 149, 243, 70), offset=offset,
 p2 = plot(lower, "Main Lower", color=color.rgb(33, 149, 243, 70), offset=offset,linewidth = 2)
 
 // === Sub Bollinger Bands ===
-length_ = input.int(3, minval=1, title="Length", group=sub_group,display=display.all-display.status_line)
+length_ = input.int(4, minval=1, title="Length", group=sub_group,display=display.all-display.status_line)
 maType_ = input.string("EMA", "Basis MA Type", options=["SMA", "EMA", "SMMA(RMA)", "WMA", "VWMA"], group=sub_group,display=display.all-display.status_line)
 src_ = input.source(open, title="Source", group=sub_group,display=display.all-display.status_line)
 mult_ = input.float(4.0, minval=0.001, maxval=50, title="StdDev", group=sub_group,display=display.all-display.status_line)
