@@ -87,6 +87,6 @@ plotshape(sell_signal, title="Sell Signal", location=location.abovebar, style=sh
 
 
 // === ALERT CONDITIONS ===
-alertcondition(buy_signal, title="BBD Buy Alert", message="Bollinger Bands Deviation Buy Signal Triggered!")
-alertcondition(sell_signal, title="BBD Sell Alert", message="Bollinger Bands Deviation Sell Signal Triggered!")
-alertcondition(buy_signal or sell_signal, title="BBD Any Signal", message="Bollinger Bands Deviation Buy or Sell Signal Triggered!")
+alertcondition(buy_signal or sell_signal, title="BBD Any Signal", message="Bollinger Bands Deviation Buy or Sell Signal")
+alertcondition(buy_signal, title="BBD Buy Alert", message="Bollinger Bands Deviation Buy Signal")
+alertcondition(sell_signal, title="BBD Sell Alert", message="Bollinger Bands Deviation Sell Signal")

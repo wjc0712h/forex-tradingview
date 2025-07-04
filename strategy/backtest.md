@@ -1,12 +1,14 @@
 ## backtesting / tradingview
 
 #### 설정
+```
 strategy("_STGY", overlay=true, initial_capital=100000, currency=currency.USD, default_qty_type = strategy.percent_of_equity, default_qty_value = 33, slippage=2, process_orders_on_close = true, fill_orders_on_standard_ohlc = true)
+```
 
 #### 손익비 계산
 ```
-var float TP_pip = input(13.3, title="TP Pips (forex)")
-var float SL_pip = input(6.3, title="SL Pips (forex)")
+var float TP_pip = input(50, title="TP Pips (forex)")
+var float SL_pip = input(50, title="SL Pips (forex)")
 var float TP_percent = input.float(1, title="TP % (crypto)")  // e.g. 0.2% TP
 var float SL_percent = input.float(0.3, title="SL % (crypto)")  // e.g. 0.1% SL
 var float TP_points = input.float(33.0, title="TP Points (Futures)")

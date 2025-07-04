@@ -1,0 +1,84 @@
+// This Pine Script® code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
+// © cdw1432t
+
+//@version=6
+indicator("FB", overlay = true)
+
+symbol = input.symbol('XAUUSD', 'ticker', display = display.all - display.status_line)
+lookback = input.int(100, "LookBack")
+ticker = request.security(symbol, timeframe.period, close[lookback], lookahead = barmerge.lookahead_off)
+candle_close = request.security(syminfo.tickerid, timeframe.period, close, lookahead = barmerge.lookahead_off)
+
+//invert symbol when ###/USD --> USD/###
+is_usd_base = str.startswith(syminfo.ticker, "USD")
+ticker := is_usd_base ? 1 / ticker : ticker
+
+// ticker BULLISH or BEARISH
+ticker_ma = request.security(symbol, timeframe.period, ta.ema(close, 25))
+ticker_bullish = ticker > ticker_ma
+ticker_bearish = ticker < ticker_ma
+
+
+// MACD
+[macd_x, sig_x, _] = ta.macd(ticker,12,26,9)
+[macd_a, sig_a, _] = ta.macd(candle_close,12,26,9)
+
+momentum_x_strong = macd_x > sig_x
+momentum_x_weak = macd_x < sig_x
+momentum_a_strong = macd_a > sig_a
+momentum_a_weak = macd_a < sig_a
+
+macd_diff = macd_x - sig_x - (macd_a - sig_a)
+divergence_bull = macd_diff >  0 and momentum_x_strong and momentum_a_weak
+divergence_bear = macd_diff < 0 and momentum_x_weak and momentum_a_strong
+
+// RSI with EMA
+ema_fast_len = input.int(3)
+ema_slow_len = input.int(8)
+
+ticker_rsi = ta.rsi(ticker, 14)
+_rsi = ta.rsi(candle_close, 14)
+
+ticker_mom = ticker - ticker[10]
+_mom = candle_close - candle_close[10]
+
+ticker_ema_fast = ta.ema(ticker, ema_fast_len)
+ticker_ema_slow = ta.ema(ticker, ema_slow_len)
+_ema_fast = ta.ema(candle_close, ema_fast_len)
+_ema_slow = ta.ema(candle_close, ema_slow_len)
+
+ticker_rsi_bullish = ticker_rsi > 55 and ticker_mom > 0 and ticker_ema_fast > ticker_ema_slow
+_lagging_bull = _rsi < 50 and _mom <= 0 and _ema_fast < _ema_slow
+ticker_rsi_bearish = ticker_rsi < 45 and ticker_mom < 0 and ticker_ema_fast < ticker_ema_slow
+_laggin_bear = _rsi > 50 and _mom >= 0 and _ema_fast > _ema_slow
+rsi_slope_ticker = ticker_rsi - ticker_rsi[10]
+rsi_slope_pair = _rsi - _rsi[10]
+
+fb_bull = rsi_slope_ticker > rsi_slope_pair and (ticker_rsi_bullish and _lagging_bull)
+fb_bear = rsi_slope_ticker < rsi_slope_pair and (ticker_rsi_bearish and _laggin_bear)
+
+//vwap
+stdevMultiplierInput = input.float(1.8, "Standard Deviation Multiplier")
+anchor = timeframe.change("1D")
+[vwap, upper, lower] = ta.vwap((high+low+close)/3, anchor, stdevMultiplierInput)
+vwap_bear = close > upper
+vwap_bull = close < lower
+// vwap_bear = lower < close and close < vwap
+// vwap_bull = vwap < close  and close < upper
+
+//options
+enable_macd = input.bool(true, "macd")
+enable_rsi = input.bool(true, "rsi")
+enable_ema = input.bool(true, "ema")
+
+
+buy_signal = (not enable_macd or divergence_bull) and (not enable_rsi or fb_bull) and (not enable_ema or ticker_bullish) and vwap_bull
+sell_signal = (not enable_macd or divergence_bear) and (not enable_rsi or fb_bear) and (not enable_ema or ticker_bearish) and vwap_bear
+
+plotshape(buy_signal, title="Buy Signal", location=location.belowbar, style=shape.circle, color=color.rgb(0, 26, 255, 66), size=size.tiny, display = display.all-display.status_line)
+plotshape(sell_signal, title="Sell Signal", location=location.abovebar, style=shape.circle, color=color.rgb(0, 26, 255, 66), size=size.tiny, display = display.all-display.status_line)
+
+// ALERT
+alertcondition(buy_signal or sell_signal, title="BUY OR SELL ALERT", message="Falling Behind Signal")
+alertcondition(buy_signal, title="BUY ALERT", message="Falling Behind Buy Signal")
+alertcondition(sell_signal, title="SELL ALERT", message="Falling Behind Sell Signal")

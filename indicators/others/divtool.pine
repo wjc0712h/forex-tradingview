@@ -1,0 +1,295 @@
+// This Pine Script™ code is subject to the terms of the Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0) https://creativecommons.org/licenses/by-nc-sa/4.0/
+// © EliCobra
+
+//@version=5
+indicator("Divergence Toolkit (Real-Time)", "[Ʌ] -‌ Div. Kit", true, format.inherit, na, scale.none, max_lines_count = 500)
+
+_                                                                                                                                                                                                                                   ='  
+                           +-----------------------+
+                           ┃       Constants       ┃
+                           +-----------------------+                                                                                                                                                                                   '//{
+
+const string tn  = 'Switched on,\nthe script will trigger Divergencies as they happen in Real-Time, could cause repainting when the conditions are met but canceled at a later time before bar closes.\n\nSwitched off,\nthe script will wait for the bar to close.'
+const string ts  = 'Calibrates the Sensitivity of which Divergencies are detected, higher values result in more detections but less accuracy.'
+const string td  = 'The Mid-Line value of the oscillator, for example RSI & MFI use 50.'
+const string tp  = 'Choose an oscillator source of which to base the Toolkit on.'
+const string tm  = 'Maximum timespan to detect a Divergence.'
+const string gd  = "Divergence Settings"
+const string gu  = "UI Options"
+const string drd = "Bearish        Divergence"
+const string urd = "Bullish        Divergence"
+const string dhd = "Bearish Hidden Divergence"
+const string uhd = "Bullish Hidden Divergence"
+
+
+const color colup = #11cf77
+const color coldn = #d11645
+const color colsm = #ff5e00
+const color colnt = #787b8635
+
+//}
+
+_                                                                                                                                                                                                                                   ='  
+                           +-----------------------+
+                           ┃        Inputs         ┃
+                           +-----------------------+                                                                                                                                                                                   '//{
+
+src  = input.source(close , "Source"        ,                              tp,               group = gd)
+trs  = input.int   (50    , "Zeroing"       , [50,                     0], td,               group = gd)
+mlt  = input.float (40    , "Sensitivity ％",   0,         100,       10 , ts,               group = gd)
+max  = input.int   (90    , "Lifetime"      ,  10,         150,        1 , tm,               group = gd)
+brp  = input.bool  (false , "Repaint"       ,                              tn,               group = gu)
+dsp  = input.string('Both', "Display"       , ['Both', 'Lines', 'Labels'],                   group = gu)
+brd  = input.bool  (true  , "Regular"       ,                                  inline = '1', group = gu)
+bhd  = input.bool  (true  , "Hidden"        ,                                  inline = '1', group = gu)
+colu = input.color (colup , "Colors"        ,                                  inline = '2', group = gu)
+cold = input.color (coldn , ""              ,                                  inline = '2', group = gu)
+
+//}
+
+_                                                                                                                                                                                                                                   ='  
+                           +-----------------------+
+                           ┃         UDTs          ┃
+                           +-----------------------+                                                                                                                                                                                   '//{
+
+type bar
+    float o = open
+    float h = high
+    float l = low
+    float c = close
+    int   i = bar_index
+
+type osc
+    float o = na
+    float s = na
+
+type trailstop
+    float s = na
+    int   d = na
+
+type divergence
+    float p = na
+    float s = na
+    int   i = na
+
+type alerts
+    bool  s = false
+    bool  b = false
+    bool  x = false
+    bool  y = false
+
+type prompt
+    string s = ''
+    bool   c = false
+    
+//}
+
+_                                                                                                                                                                                                                                   ='  
+                           +-----------------------+
+                           ┃        Methods        ┃
+                           +-----------------------+                                                                                                                                                                                   '//{
+
+method any(alerts a) =>
+    string s = switch
+        a.s => drd
+        a.b => urd
+        a.x => dhd
+        a.y => uhd
+        =>      na
+
+    prompt.new(s, not na(s))
+
+method notify(prompt p) =>
+    if p.c
+        alert(p.s, alert.freq_once_per_bar_close)
+
+method src(bar b, simple string src) =>
+    float x = switch src
+        'oc2'   => math.avg(b.o, b.c          )
+        'hl2'   => math.avg(b.h, b.l          )
+        'hlc3'  => math.avg(b.h, b.l, b.c     )
+        'ohlc4' => math.avg(b.o, b.h, b.l, b.c)
+        'hlcc4' => math.avg(b.h, b.l, b.c, b.c)
+
+    x
+
+method atr(bar b, simple int len = 1) =>
+    float tr = 
+         na(b.h[1]) ? 
+         b.h - b.l  : 
+         math.max(
+             math.max(
+                 b.h - b.l, 
+                 math.abs(b.h - b.c[1])), 
+             math.abs    (b.l - b.c[1]))
+
+    len == 1 ? tr : ta.rma(tr, len)
+
+method st(bar b, simple float factor, simple int len) =>
+	float atr = b.atr( len )
+	float up  = b.src('oc2') + factor * atr
+    up       := up < nz(up[1]) or b.c[1] > nz(up[1]) ? up : nz(up[1])
+    float dn  = b.src('oc2') - factor * atr
+    dn       := dn > nz(dn[1]) or b.c[1] < nz(dn[1]) ? dn : nz(dn[1])
+	
+    float st  = na
+    int   dir = na
+    dir := switch
+        na(atr[1])         => 1
+        st[1] == nz(up[1]) => dir := b.c > up ? -1 : +1
+        =>                    dir := b.c < dn ? +1 : -1
+	st  :=                    dir == -1       ? dn : up
+	
+    trailstop.new(st, dir)
+
+method rbull(osc o, simple int m, simple int t, simple bool s, simple bool r, simple color c) =>
+    bar            b = bar       .new(           )
+    var divergence d = divergence.new(           )
+    bool           l = ta.crossover  (o.o, o.s   )
+    float          x = math.min      (o.o, o.o[1])
+    bool           p =                false
+
+    if o.o < m and l and (r ? true : barstate.isconfirmed)
+        switch
+            na    (d.p) =>
+                d     := divergence.new(b.l, x, b.i - 1)
+                p     := false
+
+            not na(d.p) =>
+                if b.l < d.p and x > d.s and (b.i - d.i) < t
+                    if s
+                        line.new(d.i, d.s, b.i - 1, x, xloc.bar_index, extend.none, c)
+                    d := divergence.new(               )
+                    p := true
+                else
+                    d := divergence.new(b.l, x, b.i - 1)
+                    p := false
+
+    p
+
+method hbull(osc o, simple int m, simple int t, simple bool s, simple bool r, simple color c) =>
+    bar            b = bar       .new(           )
+    var divergence d = divergence.new(           )
+    bool           l = ta.crossover  (o.o, o.s   )
+    float          x = math.min      (o.o, o.o[1])
+    bool           p =                false
+
+    if o.o < m and l and (r ? true : barstate.isconfirmed)
+        switch
+            na    (d.p) =>
+                d     := divergence.new(b.l, x, b.i - 1)
+                p     := false
+
+            not na(d.p) =>
+                if b.l > d.p and x < d.s and (b.i - d.i) < t
+                    if s
+                        line.new(d.i, d.s, b.i - 1, x, xloc.bar_index, extend.none, c)
+                    d := divergence.new(               )
+                    p := true
+                else
+                    d := divergence.new(b.l, x, b.i - 1)
+                    p := false
+
+    p
+
+method rbear(osc o, simple int m, simple int t, simple bool s, simple bool r, simple color c) =>
+    bar            b = bar       .new(           )
+    var divergence d = divergence.new(           )
+    bool           u = ta.crossunder (o.o, o.s   )
+    float          x = math.max      (o.o, o.o[1])
+    bool           p =                false
+
+    if o.o > m and u and (r ? true : barstate.isconfirmed)
+        switch
+            na    (d.p) =>
+                d     := divergence.new(b.h, x, b.i - 1)
+                p     := false
+
+            not na(d.p) =>
+                if b.h > d.p and x < d.s and (b.i - d.i) < t
+                    if s
+                        line.new(d.i, d.s, b.i - 1, x, xloc.bar_index, extend.none, c)
+                    d := divergence.new(               )
+                    p := true
+                else
+                    d := divergence.new(b.h, x, b.i - 1)
+                    p := false
+
+    p
+
+method hbear(osc o, simple int m, simple int t, simple bool s, simple bool r, simple color c) =>
+    bar            b = bar       .new(           )
+    var divergence d = divergence.new(           )
+    bool           u = ta.crossunder (o.o, o.s   )
+    float          x = math.max      (o.o, o.o[1])
+    bool           p =                false
+
+    if o.o > m and u and (r ? true : barstate.isconfirmed)
+        switch
+            na    (d.p) =>
+                d     := divergence.new(b.h, x, b.i - 1)
+                p     := false
+
+            not na(d.p) =>
+                if b.h < d.p and x > d.s and (b.i - d.i) < t
+                    if s
+                        line.new(d.i, d.s, b.i - 1, x, xloc.bar_index, extend.none, c)
+                    d := divergence.new(               )
+                    p := true
+                else
+                    d := divergence.new(b.h, x, b.i - 1)
+                    p := false
+
+    p
+
+//}
+
+_                                                                                                                                                                                                                                   ='  
+                           +-----------------------+
+                           ┃         Calc          ┃
+                           +-----------------------+                                                                                                                                                                                   '//{
+
+bar        b  = bar.new(
+                  nz(src[1])      ,
+         math.max(nz(src[1]), src),
+         math.min(nz(src[1]), src),
+                     src          )
+float      f  = 1 +    (100 - mlt ) / 100
+float      tr = b  .atr(20        )
+trailstop  st = b  .st (f  ,  10  )
+osc        o  = osc.new(src,  st.s)
+
+alerts     a  = alerts.new(
+                           o.rbear(trs, max, brd and dsp != 'Labels', brp, cold),
+                           o.rbull(trs, max, brd and dsp != 'Labels', brp, colu),
+                           o.hbear(trs, max, bhd and dsp != 'Labels', brp, cold),
+                           o.hbull(trs, max, bhd and dsp != 'Labels', brp, colu))
+
+//}
+
+_                                                                                                                                                                                                                                   ='  
+                           +-----------------------+
+                           ┃        Visuals        ┃
+                           +-----------------------+                                                                                                                                                                                   '//{
+
+
+plotshape(a.s and brd and dsp != 'Lines' ? o.s + tr : na, drd, shape.labeldown, location.absolute, colnt, -1, '𝐑▾', colsm)
+plotshape(a.b and brd and dsp != 'Lines' ? o.s - tr : na, urd, shape.labelup  , location.absolute, colnt, -1, '𝐑▴', colsm)
+plotshape(a.x and bhd and dsp != 'Lines' ? o.s + tr : na, dhd, shape.labeldown, location.absolute, colnt, -1, '𝐇▾', colsm)
+plotshape(a.y and bhd and dsp != 'Lines' ? o.s - tr : na, uhd, shape.labelup  , location.absolute, colnt, -1, '𝐇▴', colsm)
+
+//}
+
+_                                                                                                                                                                                                                                   ='  
+                           +-----------------------+
+                           ┃        Alerts         ┃
+                           +-----------------------+                                                                                                                                                                                   '//{
+
+alertcondition(a.s, drd, drd)
+alertcondition(a.b, urd, urd)
+alertcondition(a.x, dhd, dhd)
+alertcondition(a.y, uhd, uhd)
+
+a.any().notify()
+
+//}

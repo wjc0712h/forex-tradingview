@@ -1,0 +1,11 @@
+//@version=6
+indicator("My Session", overlay=true)
+
+session = input.session("0500-1200", "Trading Session")
+
+in_session(i_sess) =>
+    t = time(timeframe.period, i_sess + ":23456", "UTC-7")
+    time == t
+
+bgcolor(title = "Session Highlight", color = in_session(session) ? color.rgb(145, 0, 126, 88) : na)
+
