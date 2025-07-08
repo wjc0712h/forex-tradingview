@@ -1,0 +1,215 @@
+//Created by "SPH Investment Fund"
+//@version=4
+
+study(title="Forex Overwiew True Strenght Index", shorttitle="FOTSI", precision=2, overlay=false)
+
+
+//Global input
+length1 = input(0,  title="Momentum period",  type=input.integer, minval=0)
+length2 = input(25, title="Smoothing period", type=input.integer, minval=1)
+length3 = input(15, title="Smoothing period", type=input.integer, minval=1)
+allertB = input(3,  title="Trigger bar",      type=input.integer, minval=1)
+offsetL = input(0,  title="Labels offset")
+
+
+
+//Labels color
+color_eur = input(color.blue,     title="EUR label color", type=input.color)
+color_usd = input(#0000ff,        title="USD label color", type=input.color)
+color_gbp = input(color.purple,   title="GBP label color", type=input.color)
+color_chf = input(color.fuchsia,  title="CHF label color", type=input.color)
+color_jpy = input(color.orange,   title="JPY label color", type=input.color)
+color_aud = input(color.lime,     title="AUD label color", type=input.color)
+color_cad = input(color.red,      title="CAD label color", type=input.color)
+color_nzd = input(color.green,    title="NZD label color", type=input.color)
+
+
+
+//Momentum calculation
+mom_eurusd = security("OANDA:EURUSD", timeframe.period, close - open[length1])
+mom_eurgbp = security("OANDA:EURGBP", timeframe.period, close - open[length1])
+mom_eurchf = security("OANDA:EURCHF", timeframe.period, close - open[length1])
+mom_eurjpy = security("OANDA:EURJPY", timeframe.period, close - open[length1]) / 100
+mom_euraud = security("OANDA:EURAUD", timeframe.period, close - open[length1])
+mom_eurcad = security("OANDA:EURCAD", timeframe.period, close - open[length1])
+mom_eurnzd = security("OANDA:EURNZD", timeframe.period, close - open[length1])
+mom_usdchf = security("OANDA:USDCHF", timeframe.period, close - open[length1])
+mom_usdjpy = security("OANDA:USDJPY", timeframe.period, close - open[length1]) / 100
+mom_usdcad = security("OANDA:USDCAD", timeframe.period, close - open[length1])
+mom_gbpusd = security("OANDA:GBPUSD", timeframe.period, close - open[length1])
+mom_gbpchf = security("OANDA:GBPCHF", timeframe.period, close - open[length1])
+mom_gbpjpy = security("OANDA:GBPJPY", timeframe.period, close - open[length1]) / 100
+mom_gbpaud = security("OANDA:GBPAUD", timeframe.period, close - open[length1])
+mom_gbpcad = security("OANDA:GBPCAD", timeframe.period, close - open[length1])
+mom_gbpnzd = security("OANDA:GBPNZD", timeframe.period, close - open[length1])
+mom_chfjpy = security("OANDA:CHFJPY", timeframe.period, close - open[length1]) / 100
+mom_audusd = security("OANDA:AUDUSD", timeframe.period, close - open[length1])
+mom_audchf = security("OANDA:AUDCHF", timeframe.period, close - open[length1])
+mom_audjpy = security("OANDA:AUDJPY", timeframe.period, close - open[length1]) / 100
+mom_audcad = security("OANDA:AUDCAD", timeframe.period, close - open[length1])
+mom_audnzd = security("OANDA:AUDNZD", timeframe.period, close - open[length1])
+mom_cadchf = security("OANDA:CADCHF", timeframe.period, close - open[length1])
+mom_cadjpy = security("OANDA:CADJPY", timeframe.period, close - open[length1]) / 100
+mom_nzdusd = security("OANDA:NZDUSD", timeframe.period, close - open[length1])
+mom_nzdchf = security("OANDA:NZDCHF", timeframe.period, close - open[length1])
+mom_nzdjpy = security("OANDA:NZDJPY", timeframe.period, close - open[length1]) / 100
+mom_nzdcad = security("OANDA:NZDCAD", timeframe.period, close - open[length1])
+
+
+
+//Currency momentum calculation
+mom_eur =   mom_eurusd + mom_eurgbp + mom_eurchf + mom_eurjpy + mom_euraud + mom_eurcad + mom_eurnzd
+mom_usd = - mom_eurusd - mom_gbpusd + mom_usdchf + mom_usdjpy - mom_audusd + mom_usdcad - mom_nzdusd  
+mom_gbp = - mom_eurgbp + mom_gbpusd + mom_gbpchf + mom_gbpjpy + mom_gbpaud + mom_gbpcad + mom_gbpnzd
+mom_chf = - mom_eurchf - mom_usdchf - mom_gbpchf + mom_chfjpy - mom_audchf - mom_cadchf - mom_nzdchf
+mom_jpy = - mom_eurjpy - mom_usdjpy - mom_gbpjpy - mom_chfjpy - mom_audjpy - mom_cadjpy - mom_nzdjpy
+mom_aud = - mom_euraud + mom_audusd - mom_gbpaud + mom_audchf + mom_audjpy + mom_audcad + mom_audnzd
+mom_cad = - mom_eurcad - mom_usdcad - mom_gbpcad + mom_cadchf + mom_cadjpy - mom_audcad - mom_nzdcad
+mom_nzd = - mom_eurnzd + mom_nzdusd - mom_gbpnzd + mom_nzdchf + mom_nzdjpy - mom_audnzd + mom_nzdcad
+
+
+
+//TSI calculation
+smo_eur(mom_eur, length2, length3) =>
+	smo1_eur = ema(mom_eur, length2)
+	smo2_eur = ema(smo1_eur, length3)
+dsm1_eur = smo_eur(mom_eur, length2, length3)
+dsm2_eur = smo_eur(abs(mom_eur), length2, length3)
+tsi_eur = 100 * (dsm1_eur / dsm2_eur)
+
+smo_usd(mom_usd, length2, length3) =>
+	smo1_usd = ema(mom_usd, length2)
+	smo2_usd = ema(smo1_usd, length3)
+dsm1_usd = smo_usd(mom_usd, length2, length3)
+dsm2_usd = smo_usd(abs(mom_usd), length2, length3)
+tsi_usd = 100 * (dsm1_usd / dsm2_usd)
+
+smo_gbp(mom_gbp, length2, length3) =>
+	smo1_gbp = ema(mom_gbp, length2)
+	smo2_gbp = ema(smo1_gbp, length3)
+dsm1_gbp = smo_usd(mom_gbp, length2, length3)
+dsm2_gbp = smo_usd(abs(mom_gbp), length2, length3)
+tsi_gbp = 100 * (dsm1_gbp / dsm2_gbp)
+
+smo_chf(mom_chf, length2, length3) =>
+	smo1_chf = ema(mom_chf, length2)
+	smo2_chf = ema(smo1_chf, length3)
+dsm1_chf = smo_chf(mom_chf, length2, length3)
+dsm2_chf = smo_chf(abs(mom_chf), length2, length3)
+tsi_chf = 100 * (dsm1_chf / dsm2_chf)
+
+smo_jpy(mom_jpy, length2, length3) =>
+	smo1_jpy = ema(mom_jpy, length2)
+	smo2_jpy = ema(smo1_jpy, length3)
+dsm1_jpy = smo_jpy(mom_jpy, length2, length3)
+dsm2_jpy = smo_jpy(abs(mom_jpy), length2, length3)
+tsi_jpy = 100 * (dsm1_jpy / dsm2_jpy)
+
+smo_aud(mom_aud, length2, length3) =>
+	smo1_aud = ema(mom_aud, length2)
+	smo2_aud = ema(smo1_aud, length3)
+dsm1_aud = smo_aud(mom_aud, length2, length3)
+dsm2_aud = smo_aud(abs(mom_aud), length2, length3)
+tsi_aud = 100 * (dsm1_aud / dsm2_aud)
+
+smo_cad(mom_cad, length2, length3) =>
+	smo1_cad = ema(mom_cad, length2)
+	smo2_cad = ema(smo1_cad, length3)
+dsm1_cad = smo_cad(mom_cad, length2, length3)
+dsm2_cad = smo_cad(abs(mom_cad), length2, length3)
+tsi_cad = 100 * (dsm1_cad / dsm2_cad)
+
+smo_nzd(mom_nzd, length2, length3) =>
+	smo1_nzd = ema(mom_nzd, length2)
+	smo2_nzd = ema(smo1_nzd, length3)
+dsm1_nzd = smo_nzd(mom_nzd, length2, length3)
+dsm2_nzd = smo_nzd(abs(mom_nzd), length2, length3)
+tsi_nzd = 100 * (dsm1_nzd / dsm2_nzd)
+
+
+
+//Currency plotting
+plot(tsi_eur, title="EUR", color=color.blue,    linewidth=2)
+plot(tsi_usd, title="USD", color=#0000ff,       linewidth=2)
+plot(tsi_gbp, title="GBP", color=color.purple,  linewidth=2)
+plot(tsi_chf, title="CHF", color=color.fuchsia, linewidth=2)
+plot(tsi_jpy, title="JPY", color=color.orange,  linewidth=2)
+plot(tsi_aud, title="AUD", color=color.lime,    linewidth=2)
+plot(tsi_cad, title="CAD", color=color.red,     linewidth=2)
+plot(tsi_nzd, title="NZD", color=color.green,   linewidth=2)
+
+
+
+//Labels
+lab_eur = label.new(time + offsetL, tsi_eur, "EUR",
+     style = label.style_label_left,
+     color = color_eur,
+     textcolor = color.white,
+     xloc = xloc.bar_time)
+label.delete(lab_eur[1])
+
+lab_usd = label.new(time + offsetL, tsi_usd, "USD",
+     style = label.style_label_left,
+     color = color_usd,
+     textcolor = color.white,
+     xloc = xloc.bar_time)
+label.delete(lab_usd[1])
+
+lab_gbp = label.new(time + offsetL, tsi_gbp, "GBP",
+     style = label.style_label_left,
+     color = color_gbp,
+     textcolor = color.white,
+     xloc = xloc.bar_time)
+label.delete(lab_gbp[1])
+
+lab_chf = label.new(time + offsetL, tsi_chf, "CHF",
+     style = label.style_label_left,
+     color = color_chf,
+     textcolor = color.white,
+     xloc = xloc.bar_time)
+label.delete(lab_chf[1])
+
+lab_jpy = label.new(time + offsetL, tsi_jpy, "JPY",
+     style = label.style_label_left,
+     color = color_jpy,
+     textcolor = color.white,
+     xloc = xloc.bar_time)
+label.delete(lab_jpy[1])
+
+lab_aud = label.new(time + offsetL, tsi_aud, "AUD",
+     style = label.style_label_left,
+     color = color_aud,
+     textcolor = color.white,
+     xloc = xloc.bar_time)
+label.delete(lab_aud[1])
+
+lab_cad = label.new(time + offsetL, tsi_cad, "CAD",
+     style = label.style_label_left,
+     color = color_cad,
+     textcolor = color.white,
+     xloc = xloc.bar_time)
+label.delete(lab_cad[1])
+
+lab_nzd = label.new(time + offsetL, tsi_nzd, "NZD",
+     style = label.style_label_left,
+     color = color_nzd,
+     textcolor = color.white,
+     xloc = xloc.bar_time)
+label.delete(lab_nzd[1])
+
+
+
+//Graphics plotting
+overbuy     = hline(50,  title="Overbuy",       color=color.red,    linestyle=hline.style_dotted)
+oversell    = hline(-50, title="Oversell",      color=color.green,  linestyle=hline.style_dotted)
+level25     = hline(25,  title="Upper range",   color=color.white,  linestyle=hline.style_dotted)
+levelm25    = hline(-25, title="Lower range",   color=color.white,  linestyle=hline.style_dotted)
+
+fill(level25, levelm25, title="Range", color=color.new(color.purple, 95))
+
+
+
+
+
+//Proudly created by Stefano Panetta
+//End scripting on 07/05/2021 at 12:42:13
