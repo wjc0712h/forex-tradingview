@@ -1,3 +1,6 @@
 .DS_Store
 api.txt
 .venv
+node_modules
+index.html
+forward_rates.json

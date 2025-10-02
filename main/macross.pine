@@ -1,0 +1,137 @@
+//WOOJIN CHOI, 9/29/2025
+//@version=6
+sma (float x, int y) =>
+    sum = 0.0
+    for i = 0 to y - 1
+        sum := sum + x[i] / y
+    sum
+
+ema (float src, int length) =>
+    alpha = 2 / (length + 1)
+    sum = 0.0
+    sum := na(sum[1]) ? src : alpha * src + (1 - alpha) * nz(sum[1])
+
+kama (float xPrice, int Length)=>
+    xvnoise = math.abs(xPrice - xPrice[1])
+    nfastend = 0.666
+    nslowend = 0.0645
+    nsignal = math.abs(xPrice - xPrice[Length])
+    nnoise = math.sum(xvnoise, Length)
+    nefratio = (nnoise != 0 ? nsignal / nnoise : 0)
+    nsmooth = math.pow(nefratio * (nfastend - nslowend) + nslowend, 2) 
+    nAMA = 0.0
+    nAMA := nz(nAMA[1]) + nsmooth * (xPrice - nz(nAMA[1]))
+
+zlema (float src, int length) =>
+    zxLag = length/2==math.round(length/2) ? length/2 : (length - 1) / 2
+    zxEMAData = (src + (src - src[zxLag]))
+    ZLEMA = ema(zxEMAData, length)
+
+mav (float source, int length) => 
+    ((ta.sma(source, length)[1]*(length-1)) + source) / length
+
+dema (float src, int len) =>
+    e = ema(src, len)
+    2 * e - ema(e, len)
+
+tema (float src, int len) =>
+    e = ema(src, len)
+    3 * (e - ema(e, len)) + ema(ema(e, len), len)
+
+hma (float src, int len) =>
+    ta.wma(2 * ta.wma(src, len / 2) - ta.wma(src, len), math.round(math.sqrt(len)))
+
+tma (float source, int length) =>
+    ta.sma(ta.sma(source, math.ceil(length / 2)), math.floor(length / 2) + 1)
+
+ama (float source, int length, int fast, int slow) =>
+    fastAlpha = 2 / (fast + 1)
+    slowAlpha = 2 / (slow + 1)
+    
+    hh = ta.highest(length + 1)
+    ll = ta.lowest(length + 1)
+    mltp = hh - ll != 0 ? math.abs(2 * source - ll - hh) / (hh - ll) : 0
+    ssc = mltp * (fastAlpha - slowAlpha) + slowAlpha
+    
+    ama = 0.0
+    ama := nz(ama[1]) + math.pow(ssc, 2) * (source - nz(ama[1]))
+
+    ama
+
+rma (float src, int length) =>
+    alpha = 1 / length
+    sum = 0.0
+    sum := na(sum[1]) ? sma(src, length) : alpha * src + (1 - alpha) * nz(sum[1])
+
+bwma (float src, int length, int beta, int alpha) =>
+    var b = array.new_float(0)
+    if barstate.isfirst
+        for i = 0 to length-1
+            x = i / (length-1)
+            w = math.pow(x, alpha-1) * math.pow(1-x, beta-1)
+            array.push(b,w)
+
+    den = array.sum(b)
+    sum = 0.
+    for i = 0 to length-1
+        sum := sum + src[i]*array.get(b,i)
+    filt = sum/den
+
+indicator("MA-cross", shorttitle="MAcross", overlay=true, timeframe="", timeframe_gaps=true)
+
+// Input parameters
+length1 = input(5, title = "MA 1 length", group="MA1")
+length2 = input(8,  title = "MA 2 length", group="MA2")
+src1 = input.source(title="MA 1 source", defval=close, group="MA1")
+src2 = input.source(title="MA 2 source", defval=open, group="MA2")
+option1 = input.string(title="MA 1 option", defval="EMA",options =['ALMA', 'AMA', 'BWMA', 'DEMA', 'EMA', 'HMA', 'KAMA', 'LSMA', 'MAV', 'RMA', 'SMA', 'SWMA', 'TEMA', 'TMA', 'VWMA', 'WMA', 'ZLEMA'], group="MA1")
+option2 = input.string(title="MA 2 option", defval="EMA",options=['ALMA', 'AMA', 'BWMA', 'DEMA', 'EMA', 'HMA', 'KAMA', 'LSMA', 'MAV', 'RMA', 'SMA', 'SWMA', 'TEMA', 'TMA', 'VWMA', 'WMA', 'ZLEMA'], group="MA2")
+
+same = input.bool(false, "same MA?",group = "Settings")
+option = input.string(title="option", defval="EMA",options =['ALMA', 'AMA', 'BWMA', 'DEMA', 'EMA', 'HMA', 'KAMA', 'LSMA', 'MAV', 'RMA', 'SMA', 'SWMA', 'TEMA', 'TMA', 'VWMA', 'WMA', 'ZLEMA'],group = "Settings")
+
+ma_calc(length, source,option) =>
+    switch option
+        'ALMA'  => ta.alma(source, length,0.85, 6)
+        'AMA'   => ama(source, length, 2, 30)
+        'BWMA'  => bwma(source, length, 3, 3)
+        'DEMA'  => dema(source, length)
+        'EMA'   => ema(source, length)
+        'HMA'   => hma(source, length)
+        'KAMA'  => kama(source, length)
+        'LSMA'  => ta.linreg(source, length, 0)
+        'MAV'   => mav(source, length)
+        'RMA'   => rma(source, length)
+        'SMA'   => ta.sma(source, length)
+        'SWMA'  => ta.swma(source)
+        'TEMA'  => tema(source, length)
+        'TMA'   => tma(source, length)
+        'VWMA'  => ta.vwma(source, length)
+        'WMA'   => ta.wma(source, length)
+        'ZLEMA' => zlema(source, length)
+
+if same
+    option1 := option
+    option2 := option
+ma1 = ma_calc(length1, src1, option1)
+ma2 = ma_calc(length2, src2, option2)
+
+slope_ma1 = (ma1 - ma1[5])/ 5
+slope_ma2 = (ma2 - ma2[5])/ 5
+
+ma1Color =  (ma1 < close and slope_ma1 > 0 and ma1 > ma2) or (ma1 > close and slope_ma1 < 0 and ma1 < ma2) ? color.rgb(7, 23, 255) : color.rgb(11, 27, 253)
+ma2Color =  (ma2 < close and slope_ma2 > 0 and ma1 > ma2) or (ma2 > close and slope_ma2 < 0 and ma1 < ma2) ? color.rgb(255, 13, 13) : color.rgb(255, 0, 0)
+
+// plot(slope_jma1,"slope5" ,display = display.data_window)
+// plot(slope_jma2,"slope8" ,display = display.data_window)
+plot(ma1, title="MA1", linewidth=1, color=ma1Color)
+plot(ma2, title="MA2", linewidth=1, color=ma2Color)
+
+bullishCross = ta.crossover(ma1, ma2)
+bearishCross = ta.crossunder(ma1, ma2)
+
+
+plotshape(bullishCross, title="Bullish Cross", location=location.belowbar, style=shape.diamond, color=color.rgb(17, 0, 255), display = display.all-display.status_line)
+plotshape(bearishCross, title="Bearish Cross", location=location.abovebar, style=shape.diamond, color=color.rgb(255, 0, 0),  display = display.all-display.status_line)
+
+alertcondition(bearishCross or bullishCross, title="MA CROSS SIGNAL", message="MA CROSS SIGNAL")

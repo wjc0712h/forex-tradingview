@@ -1,0 +1,217 @@
+//WOOJIN CHOI, 9/29/2025
+//@version=6
+spread_chart(pair) =>
+    spread = 0.0
+    switch pair
+        "AUDUSD" => spread := 1.1
+        "EURUSD" => spread := 1.5
+        "GBPUSD" => spread := 1.7
+        "NZDUSD" => spread := 2.3
+        "USDCAD" => spread := 1.6
+        "USDCHF" => spread := 1.7
+        "USDJPY" => spread := 1.5
+        "AUDCAD" => spread := 2.3
+        "AUDCHF" => spread := 1.8
+        "AUDJPY" => spread := 2.2
+        "AUDNZD" => spread := 2.8
+        "CADCHF" => spread := 2.2 
+        "CADJPY" => spread := 3.3
+        "EURAUD" => spread := 3.7
+        "EURCAD" => spread := 3.3
+        "EURCHF" => spread := 2.2
+        "EURGBP" => spread := 1.5
+        "EURJPY" => spread := 2.5
+        "EURNZD" => spread := 5.8
+        "GBPAUD" => spread := 4.7
+        "GBPCAD" => spread := 4.2
+        "GBPCHF" => spread := 3.7
+        "GBPJPY" => spread := 3.5
+        "GBPNZD" => spread := 8.6
+        "NZDCAD" => spread := 4.2
+        "NZDCHF" => spread := 3.3
+        "NZDJPY" => spread := 2.2
+        "CHFJPY" => spread := 3.3
+    spread
+pip_chart(pair) =>
+    profit = 0.0
+    switch pair
+        "AUDUSD" => profit := 10
+        "EURUSD" => profit := 10
+        "GBPUSD" => profit := 10
+        "NZDUSD" => profit := 10
+        "USDCAD" => profit := 10
+        "USDCHF" => profit := 12.32
+        "USDJPY" => profit := 6.69465
+        "AUDCAD" => profit := 7.32
+        "AUDCHF" => profit := 12.56
+        "AUDJPY" => profit := 6.84
+        "AUDNZD" => profit := 6.04
+        "CADCHF" => profit := 12.56
+        "CADJPY" => profit := 6.84
+        "EURAUD" => profit := 6.59
+        "EURCAD" => profit := 7.32
+        "EURCHF" => profit := 12.56
+        "EURGBP" => profit := 13.58
+        "EURJPY" => profit := 6.84
+        "EURNZD" => profit := 6.04
+        "GBPAUD" => profit := 6.5544
+        "GBPCAD" => profit := 7.17849
+        "GBPCHF" => profit := 12.56
+        "GBPJPY" => profit := 6.84
+        "GBPNZD" => profit := 6.04
+        "NZDCAD" => profit := 7.32
+        "NZDCHF" => profit := 12.56
+        "NZDJPY" => profit := 6.84
+        "CHFJPY" => profit := 6.84
+    profit
+indicator(title="FX_ATR", shorttitle="FXATR", overlay=false)
+
+len = input.int(title="length", defval=365, minval=1)
+percent = input.float(title="percent", defval = 1)
+
+
+lot = input.float(title="lot", defval = 1)
+pip = input.float(title="pip", defval = 1)
+account_currency = input.string(title = "Account Currency", defval = "USD", options=["USD", "EUR", "GBP", "AUD", "CAD", "CHF", "JPY", "NZD","KRW"])
+
+isForex = syminfo.type == "forex"
+col = color.gray
+if isForex
+	col := color.black
+
+symbol = syminfo.ticker
+upperSymbol = str.upper(symbol)
+
+mul = 1
+if isForex
+	mul := 10000
+	if (syminfo.currency == "JPY" or syminfo.currency == "KRW")
+    	mul := 100
+
+calc_sum_of_ranges(length) =>
+    sum = 0.0
+    for i = 1 to length
+        current_close = close[i]
+        current_open = open[i]
+        current_low = low[i]
+        current_high = high[i]
+
+        if current_close > current_open
+            sum := sum + math.abs(current_open - current_low)
+        else
+            sum := sum + math.abs(current_open - current_high)
+
+    sum / length
+calc_sum_of_longs(length) =>
+    sum = 0.0
+    for i = 1 to length
+        current_close = close[i]
+        current_open = open[i]
+        current_low = low[i]
+
+        if current_close > current_open
+            sum := sum + math.abs(current_open - current_low)
+    sum / length
+calc_sum_of_shorts(length) =>
+    sum = 0.0
+    for i = 1 to length
+        current_close = close[i]
+        current_open = open[i]
+        current_high = high[i]
+
+        if current_close < current_open
+            sum := sum + math.abs(current_open - current_high)
+    sum / length
+atr_ =  calc_sum_of_ranges(len)*mul
+atr_p = atr_ * percent
+plot(atr_, title = "ATR", color=color.rgb(116, 71, 30), linewidth = 1, display = display.all - display.status_line)
+plot(atr_p, title = "ATR", color=color.rgb(116, 71, 30), linewidth = 1, display = display.status_line)
+
+atr_daily = ta.ema(ta.tr(true), len)*mul
+atr_daily_p = atr_daily * percent
+plot(atr_daily, title = "ATR", color=col, linewidth = 3 ,display = display.all - display.status_line)
+plot(atr_daily_p, title = "ATR", color=col, linewidth = 3 ,display = display.status_line)
+
+atr_longs =  calc_sum_of_longs(len)*mul
+atr_shorts =  calc_sum_of_shorts(len)*mul
+plot(atr_longs, title = "ATR", color=color.teal, linewidth = 1 ,display = display.all - display.status_line)
+plot(atr_shorts, title = "ATR", color=color.red, linewidth = 1 ,display =display.all - display.status_line)
+
+
+//calculate profit
+// Get current symbol
+current_pair = syminfo.ticker
+
+// Function to determine if pair contains JPY
+is_jpy_pair(pair) =>
+    ret = str.contains(pair, "JPY") or str.contains(pair, "KRW")
+
+// Function to get pip size
+get_pip_size(pair) =>
+    is_jpy_pair(pair) ? 0.01 : 0.0001
+
+// Function to get lot value (contract size)
+get_contract_size(pair) =>
+    100000.0  // Standard lot size
+
+// Function to extract base and quote currencies
+get_base_currency(pair) =>
+    str.substring(pair, 0, 3)
+
+get_quote_currency(pair) =>
+    str.substring(pair, 3, 6)
+
+// Function to get exchange rate for currency conversion
+get_exchange_rate(from_currency, to_currency) =>
+    if from_currency == to_currency
+        1.0
+    else
+        // Request exchange rate data
+        rate_symbol = from_currency + to_currency
+        // If direct pair doesn't exist, try inverse
+        request.security(rate_symbol, "1D", close, ignore_invalid_symbol=true)
+
+// Main pip value calculation function
+calculate_pip_value(pair, lot_size_param, account_curr) =>
+    base_curr = get_base_currency(pair)
+    quote_curr = get_quote_currency(pair)
+    pip_size = get_pip_size(pair)
+    contract_size = get_contract_size(pair)
+    
+    // Calculate pip value in quote currency
+    pip_value_quote = pip_size * contract_size * lot_size_param
+    
+    // Convert to account currency if different from quote currency
+    if quote_curr == account_curr
+        pip_value_quote
+    else
+        // Get conversion rate from quote currency to account currency
+        conversion_rate = get_exchange_rate(quote_curr, account_curr)
+        if na(conversion_rate) or conversion_rate == 0
+            // Try inverse rate
+            inverse_rate = get_exchange_rate(account_curr, quote_curr)
+            if na(inverse_rate) or inverse_rate == 0
+                pip_value_quote  // Fallback to quote currency value
+            else
+                pip_value_quote / inverse_rate
+        else
+            pip_value_quote * conversion_rate
+
+// Calculate current pip value
+current_pip_value = calculate_pip_value(current_pair, lot, account_currency)
+
+var table table_ = table.new(position.bottom_right, 4, 2, frame_width=1, frame_color=color.black,border_width = 1,border_color = color.black)
+if barstate.islast
+    table.cell(table_, 0, 0, str.tostring(spread_chart(upperSymbol), "#.##"), text_halign = text.align_right, text_color = color.white, bgcolor = color.gray)     
+    //table.cell(table_, 1, 0, "$" + str.tostring(pip_chart(upperSymbol)*lot, "#.##"), text_halign = text.align_right, text_color = color.white, bgcolor = color.gray)     
+    table.cell(table_, 1, 0, str.tostring(current_pip_value, "#.##") + " " + account_currency, text_halign = text.align_right, text_color = color.white, bgcolor = color.rgb(89, 90, 95))     
+    //table.cell(table_, 2, 0, "$" + str.tostring(pip_chart(upperSymbol)*lot*pip, "#.##"), text_halign = text.align_right, text_color = color.white, bgcolor = color.gray)     
+    table.cell(table_, 2, 0, str.tostring(current_pip_value*pip, "#.##") + " " + account_currency, text_halign = text.align_right, text_color = color.white, bgcolor = color.rgb(89, 90, 95))     
+    table.cell(table_, 3, 0, str.tostring((close-open)*mul, "#.#"), text_halign = text.align_right, text_color = color.white, bgcolor = color.gray)
+    
+    table.cell(table_, 0, 1, str.tostring(atr_daily_p, "#.#"), text_halign = text.align_left, text_color = color.white, bgcolor = color.new(#000000, 20))
+    table.cell(table_, 1, 1, str.tostring(atr_p, "#.#"), text_halign = text.align_left, text_color = color.white, bgcolor = color.rgb(121, 78, 38))
+    table.cell(table_, 2, 1, str.tostring(atr_longs, "#.#"), text_halign = text.align_left, text_color = color.white, bgcolor = color.teal)
+    table.cell(table_, 3, 1, str.tostring(atr_shorts, "#.#"), text_halign = text.align_left, text_color = color.white, bgcolor = color.red)
+
+

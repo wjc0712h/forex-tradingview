@@ -1,0 +1,134 @@
+//WOOJIN CHOI, 9/29/2025
+//@version=6
+color_eur = color(color.rgb(99, 224, 247))
+color_usd = color(#0000ff)
+color_gbp = color(color.purple)
+color_chf = color(color.fuchsia)
+color_jpy = color(color.orange)
+color_aud = color(color.lime)
+color_cad = color(color.red)
+color_nzd = color(color.green)
+
+color_eur2 = color(color.rgb(30, 147, 243))
+color_usd2 = color(#0e0efa)
+color_gbp2 = color(color.rgb(151, 35, 172))
+color_chf2 = color(color.rgb(222, 56, 252))
+color_jpy2 = color(color.rgb(231, 140, 4))
+color_aud2 = color(color.rgb(4, 221, 116))
+color_cad2 = color(color.rgb(250, 70, 70))
+color_nzd2 = color(color.rgb(75, 179, 78))
+
+isForex = syminfo.type == "forex"
+indicator("COT OI", shorttitle="OI")
+
+import TradingView/LibraryCOT/3 as cot
+
+var string Root_Symbol = syminfo.root
+var string CFTC_Code_base = isForex ? cot.convertRootToCOTCode("Base currency") : cot.convertRootToCOTCode("Auto")
+var string CFTC_Code_quote = isForex ? cot.convertRootToCOTCode("Currency") : cot.convertRootToCOTCode("Auto")
+
+// Normalization method selection
+normMethod = input.string("Z-Score", "Normalization Method", 
+     options=["Percentage Change", "Z-Score", "Min-Max (0-100)"], 
+     group="Normalization")
+
+// Parameters for normalization
+lookback = input.int(252, "Lookback Period", minval=20, maxval=1000, group="Normalization")
+
+dataRequest(code, metricName, direction) =>
+    tickerId = cot.COTTickerid("Legacy", code, false, metricName, direction, "All")
+    value = request.security(tickerId, "1D", close, ignore_invalid_symbol = true)
+    if barstate.islastconfirmedhistory and na(value)
+        runtime.error("Could not find relevant COT data based on the current symbol.")
+    value
+
+bool showTable = input.bool(true, "Show table", group = "Display")
+bool showRaw = input.bool(false, "Show Raw Data", group = "Display")
+
+base_oi = dataRequest(CFTC_Code_base, "Open Interest", "No direction")
+quote_oi = dataRequest(CFTC_Code_quote, "Open Interest", "No direction")
+
+// Normalization functions
+normalize_percentage_change(series float data) =>
+    pct_change = (data - data[1]) / data[1] * 100
+    pct_change
+
+normalize_zscore(series float data, simple int period) =>
+    mean = ta.sma(data, period)
+    stdev = ta.stdev(data, period)
+    zscore = (data - mean) / stdev
+    zscore
+
+normalize_minmax(series float data, simple int period) =>
+    highest = ta.highest(data, period)
+    lowest = ta.lowest(data, period)
+    normalized = (data - lowest) / (highest - lowest) * 100
+    normalized
+
+// Apply normalization based on selected method
+normalize_data(series float data) =>
+    switch normMethod
+        "Percentage Change" => normalize_percentage_change(data)
+        "Z-Score" => normalize_zscore(data, lookback)
+        "Min-Max (0-100)" => normalize_minmax(data, lookback)
+        => data
+
+base_oi_norm = normalize_data(base_oi)
+quote_oi_norm = normalize_data(quote_oi)
+
+setColor(string code) =>
+    switch code
+        "098662" => base_oi_norm > base_oi_norm[1] ? color_usd : color_usd2
+        "099741" => base_oi_norm > base_oi_norm[1] ? color_eur : color_eur2 
+        "097741" => base_oi_norm > base_oi_norm[1] ? color_jpy : color_jpy2 
+        "092741" => base_oi_norm > base_oi_norm[1] ? color_chf : color_chf2 
+        "090741" => base_oi_norm > base_oi_norm[1] ? color_cad : color_cad2 
+        "112741" => base_oi_norm > base_oi_norm[1] ? color_nzd : color_nzd2 
+        "096742" => base_oi_norm > base_oi_norm[1] ? color_gbp : color_gbp2 
+        "232741" => base_oi_norm > base_oi_norm[1] ? color_aud : color_aud2 
+        => color.black
+
+codeToCurrency(string code) =>
+    string currency = switch code
+        "133741" => "BTC"
+        "098662" => "USD"
+        "099741" => "EUR"
+        "097741" => "JPY"
+        "095741" => "MXN"
+        "092741" => "CHF"
+        "089741" => "RUB"
+        "090741" => "CAD"
+        "112741" => "NZD"
+        "096742" => "GBP"
+        "102741" => "BRL"
+        "122741" => "ZAR"
+        "232741" => "AUD"
+        "146021" => "ETH"
+        => code
+    currency
+
+// Display table
+var table symbolDisplay = table.new(position.bottom_right, 1, 2)
+if barstate.isfirst and showTable
+    color TEXT_COLOR = color.white
+    color BG_COLOR = color.new(color.black, 50)
+    
+    string txt = str.format("{0}/{1} OI", codeToCurrency(CFTC_Code_base), codeToCurrency(CFTC_Code_quote))
+    table.cell(symbolDisplay, 0, 0, txt, text_halign = text.align_left, text_color = TEXT_COLOR, bgcolor = BG_COLOR)
+    
+    string method_info = switch normMethod
+        "Percentage Change" => "Daily % change"
+        "Z-Score" => str.format("Z-Score ({0}d)", lookback)
+        "Min-Max (0-100)" => str.format("Min-Max 0-100 ({0})", lookback)
+        => normMethod
+    
+    table.cell(symbolDisplay, 0, 1, method_info, text_halign = text.align_left, 
+         text_color = color.gray, bgcolor = BG_COLOR, text_size = size.small)
+
+// Plot normalized data
+plot(showRaw ? na : base_oi_norm, "Base OI Normalized", color=setColor(CFTC_Code_base), linewidth=2)
+plot(showRaw ? na : quote_oi_norm, "Quote OI Normalized", color=setColor(CFTC_Code_quote), linewidth=2)
+
+// Optional: Plot raw data on separate scale
+plot(showRaw ? base_oi : na, "Base OI Raw", color=(setColor(CFTC_Code_base)), linewidth=2)
+plot(showRaw ? quote_oi : na, "Quote OI Raw", color=(setColor(CFTC_Code_quote)), linewidth=2)

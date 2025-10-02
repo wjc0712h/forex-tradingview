@@ -1,0 +1,284 @@
+//WOOJIN CHOI, 9/29/2025
+//@version=6
+indicator(title="Forex Overview True Strength Index", shorttitle="FOTSI", precision=2, overlay=false)
+
+fx_src = input.string("OANDA", title ="FX source", options = ["OANDA", "TASTYFX"])
+length1 = input.int(0,  title="Momentum period",  minval=0, group="FOTSI Settings")
+length2 = input.int(5, title="Smoothing period", minval=1, group="FOTSI Settings")
+length3 = input.int(15, title="Smoothing period", minval=1, group="FOTSI Settings")
+slope_length = input.int(2, "Slope Length", group="FOTSI Settings")
+
+show_all = input.bool(true, "Show All", group="Display")
+show_table = input.bool(false, "Show Table",  group="Display")
+
+color_eur = color(color.blue)
+color_usd = color(#0000ff)
+color_gbp = color(color.purple)
+color_chf = color(color.fuchsia)
+color_jpy = color(color.orange)
+color_aud = color(color.lime)
+color_cad = color(color.red)
+color_nzd = color(color.green)
+
+color_eur2 = color(color.rgb(30, 147, 243))
+color_usd2 = color(#0e0efa)
+color_gbp2 = color(color.rgb(151, 35, 172))
+color_chf2 = color(color.rgb(222, 56, 252))
+color_jpy2 = color(color.rgb(231, 140, 4))
+color_aud2 = color(color.rgb(4, 221, 116))
+color_cad2 = color(color.rgb(250, 70, 70))
+color_nzd2 = color(color.rgb(75, 179, 78))
+
+eurusd_src = "OANDA:EURUSD"
+eurgbp_src = "OANDA:EURGBP"
+eurchf_src = "OANDA:EURCHF"
+eurjpy_src = "OANDA:EURJPY"
+euraud_src = "OANDA:EURAUD"
+eurcad_src = "OANDA:EURCAD"
+eurnzd_src = "OANDA:EURNZD"
+usdchf_src = "OANDA:USDCHF"
+usdjpy_src = "OANDA:USDJPY"
+usdcad_src = "OANDA:USDCAD"
+gbpusd_src = "OANDA:GBPUSD"
+gbpchf_src = "OANDA:GBPCHF"
+gbpjpy_src = "OANDA:GBPJPY"
+gbpaud_src = "OANDA:GBPAUD"
+gbpcad_src = "OANDA:GBPCAD"
+gbpnzd_src = "OANDA:GBPNZD"
+chfjpy_src = "OANDA:CHFJPY"
+audusd_src = "OANDA:AUDUSD"
+audchf_src = "OANDA:AUDCHF"
+audjpy_src = "OANDA:AUDJPY"
+audcad_src = "OANDA:AUDCAD"
+audnzd_src = "OANDA:AUDNZD"
+cadchf_src = "OANDA:CADCHF"
+cadjpy_src = "OANDA:CADJPY"
+nzdusd_src = "OANDA:NZDUSD"
+nzdchf_src = "OANDA:NZDCHF"
+nzdjpy_src = "OANDA:NZDJPY"
+nzdcad_src = "OANDA:NZDCAD"
+if fx_src == "TASTYFX"
+    eurusd_src := "TASTYFX:EURUSD"
+    eurgbp_src := "TASTYFX:EURGBP"
+    eurchf_src := "TASTYFX:EURCHF"
+    eurjpy_src := "TASTYFX:EURJPY"
+    euraud_src := "TASTYFX:EURAUD"
+    eurcad_src := "TASTYFX:EURCAD"
+    eurnzd_src := "TASTYFX:EURNZD"
+    usdchf_src := "TASTYFX:USDCHF"
+    usdjpy_src := "TASTYFX:USDJPY"
+    usdcad_src := "TASTYFX:USDCAD"
+    gbpusd_src := "TASTYFX:GBPUSD"
+    gbpchf_src := "TASTYFX:GBPCHF"
+    gbpjpy_src := "TASTYFX:GBPJPY"
+    gbpaud_src := "TASTYFX:GBPAUD"
+    gbpcad_src := "TASTYFX:GBPCAD"
+    gbpnzd_src := "TASTYFX:GBPNZD"
+    chfjpy_src := "TASTYFX:CHFJPY"
+    audusd_src := "TASTYFX:AUDUSD"
+    audchf_src := "TASTYFX:AUDCHF"
+    audjpy_src := "TASTYFX:AUDJPY"
+    audcad_src := "TASTYFX:AUDCAD"
+    audnzd_src := "TASTYFX:AUDNZD"
+    cadchf_src := "TASTYFX:CADCHF"
+    cadjpy_src := "TASTYFX:CADJPY"
+    nzdusd_src := "TASTYFX:NZDUSD"
+    nzdchf_src := "TASTYFX:NZDCHF"
+    nzdjpy_src := "TASTYFX:NZDJPY"
+    nzdcad_src := "TASTYFX:NZDCAD"
+
+mom_eurusd = request.security(eurusd_src, timeframe.period, close - open[length1])
+mom_eurgbp = request.security(eurgbp_src, timeframe.period, close - open[length1])
+mom_eurchf = request.security(eurchf_src, timeframe.period, close - open[length1])
+mom_eurjpy = request.security(eurjpy_src, timeframe.period, close - open[length1]) / 100
+mom_euraud = request.security(euraud_src, timeframe.period, close - open[length1])
+mom_eurcad = request.security(eurcad_src, timeframe.period, close - open[length1])
+mom_eurnzd = request.security(eurnzd_src, timeframe.period, close - open[length1])
+mom_usdchf = request.security(usdchf_src, timeframe.period, close - open[length1])
+mom_usdjpy = request.security(usdjpy_src, timeframe.period, close - open[length1]) / 100
+mom_usdcad = request.security(usdcad_src, timeframe.period, close - open[length1])
+mom_gbpusd = request.security(gbpusd_src, timeframe.period, close - open[length1])
+mom_gbpchf = request.security(gbpchf_src, timeframe.period, close - open[length1])
+mom_gbpjpy = request.security(gbpjpy_src, timeframe.period, close - open[length1]) / 100
+mom_gbpaud = request.security(gbpaud_src, timeframe.period, close - open[length1])
+mom_gbpcad = request.security(gbpcad_src, timeframe.period, close - open[length1])
+mom_gbpnzd = request.security(gbpnzd_src, timeframe.period, close - open[length1])
+mom_chfjpy = request.security(chfjpy_src, timeframe.period, close - open[length1]) / 100
+mom_audusd = request.security(audusd_src, timeframe.period, close - open[length1])
+mom_audchf = request.security(audchf_src, timeframe.period, close - open[length1])
+mom_audjpy = request.security(audjpy_src, timeframe.period, close - open[length1]) / 100
+mom_audcad = request.security(audcad_src, timeframe.period, close - open[length1])
+mom_audnzd = request.security(audnzd_src, timeframe.period, close - open[length1])
+mom_cadchf = request.security(cadchf_src, timeframe.period, close - open[length1])
+mom_cadjpy = request.security(cadjpy_src, timeframe.period, close - open[length1]) / 100
+mom_nzdusd = request.security(nzdusd_src, timeframe.period, close - open[length1])
+mom_nzdchf = request.security(nzdchf_src, timeframe.period, close - open[length1])
+mom_nzdjpy = request.security(nzdjpy_src, timeframe.period, close - open[length1]) / 100
+mom_nzdcad = request.security(nzdcad_src, timeframe.period, close - open[length1])
+
+mom_eur =   mom_eurusd + mom_eurgbp + mom_eurchf + mom_eurjpy + mom_euraud + mom_eurcad + mom_eurnzd
+mom_usd = - mom_eurusd - mom_gbpusd + mom_usdchf + mom_usdjpy - mom_audusd + mom_usdcad - mom_nzdusd  
+mom_gbp = - mom_eurgbp + mom_gbpusd + mom_gbpchf + mom_gbpjpy + mom_gbpaud + mom_gbpcad + mom_gbpnzd
+mom_chf = - mom_eurchf - mom_usdchf - mom_gbpchf + mom_chfjpy - mom_audchf - mom_cadchf - mom_nzdchf
+mom_jpy = - mom_eurjpy - mom_usdjpy - mom_gbpjpy - mom_chfjpy - mom_audjpy - mom_cadjpy - mom_nzdjpy
+mom_aud = - mom_euraud + mom_audusd - mom_gbpaud + mom_audchf + mom_audjpy + mom_audcad + mom_audnzd
+mom_cad = - mom_eurcad - mom_usdcad - mom_gbpcad + mom_cadchf + mom_cadjpy - mom_audcad - mom_nzdcad
+mom_nzd = - mom_eurnzd + mom_nzdusd - mom_gbpnzd + mom_nzdchf + mom_nzdjpy - mom_audnzd + mom_nzdcad
+
+tsi_calc(momentum, length2, length3) =>
+    smo1 = ta.ema(momentum, length2)
+    smo2 = ta.ema(smo1, length3)
+    sma1 = ta.ema(math.abs(momentum), length2)
+    sma2 = ta.ema(sma1, length3)
+    100 * (smo2 / sma2)
+
+tsi_eur = tsi_calc(mom_eur, length2, length3)
+tsi_usd = tsi_calc(mom_usd, length2, length3)
+tsi_gbp = tsi_calc(mom_gbp, length2, length3)
+tsi_chf = tsi_calc(mom_chf, length2, length3)
+tsi_jpy = tsi_calc(mom_jpy, length2, length3)
+tsi_aud = tsi_calc(mom_aud, length2, length3)
+tsi_cad = tsi_calc(mom_cad, length2, length3)
+tsi_nzd = tsi_calc(mom_nzd, length2, length3)
+
+symbol = syminfo.ticker
+upperSymbol = str.upper(symbol)
+base_currency = str.substring(symbol, 0, 3)     
+quote_currency = str.substring(symbol, 3, 6)
+
+chck_crcy(cur) =>
+    val = 0
+    if cur == base_currency
+        val := 1
+    else if cur == quote_currency
+        val := 2
+    val
+
+showEUR = str.contains(upperSymbol, "EUR")
+showUSD = str.contains(upperSymbol, "USD")
+showGBP = str.contains(upperSymbol, "GBP")
+showJPY = str.contains(upperSymbol, "JPY")
+showCHF = str.contains(upperSymbol, "CHF")
+showAUD = str.contains(upperSymbol, "AUD")
+showCAD = str.contains(upperSymbol, "CAD")
+showNZD = str.contains(upperSymbol, "NZD")
+slope_eur = (tsi_eur - tsi_eur[slope_length])/slope_length
+slope_usd = (tsi_usd - tsi_usd[slope_length])/slope_length
+slope_gbp = (tsi_gbp - tsi_gbp[slope_length])/slope_length
+slope_chf = (tsi_chf - tsi_chf[slope_length])/slope_length
+slope_jpy = (tsi_jpy - tsi_jpy[slope_length])/slope_length
+slope_aud = (tsi_aud - tsi_aud[slope_length])/slope_length
+slope_cad = (tsi_cad - tsi_cad[slope_length])/slope_length
+slope_nzd = (tsi_nzd - tsi_nzd[slope_length])/slope_length
+
+ao_eur = ta.sma(mom_eur,5) - ta.sma(mom_eur,34)
+ao_usd = ta.sma(mom_usd,5) - ta.sma(mom_usd,34)
+ao_gbp = ta.sma(mom_gbp,5) - ta.sma(mom_gbp,34)
+ao_chf = ta.sma(mom_chf,5) - ta.sma(mom_chf,34)
+ao_jpy = ta.sma(mom_jpy,5) - ta.sma(mom_jpy,34)
+ao_aud = ta.sma(mom_aud,5) - ta.sma(mom_aud,34)
+ao_cad = ta.sma(mom_cad,5) - ta.sma(mom_cad,34)
+ao_nzd = ta.sma(mom_nzd,5) - ta.sma(mom_nzd,34)
+ac_eur = ao_eur - ta.sma(ao_eur, 5)
+ac_usd = ao_usd - ta.sma(ao_usd, 5)
+ac_gbp = ao_gbp - ta.sma(ao_gbp, 5)
+ac_chf = ao_chf - ta.sma(ao_chf, 5)
+ac_jpy = ao_jpy - ta.sma(ao_jpy, 5)
+ac_aud = ao_aud - ta.sma(ao_aud, 5)
+ac_cad = ao_cad - ta.sma(ao_cad, 5)
+ac_nzd = ao_nzd - ta.sma(ao_nzd, 5)
+plot((showEUR or show_all) ? tsi_eur: na, title="EUR", color=((slope_eur > 0 and ac_eur[1] < ac_eur) or (slope_eur < 0 and ac_eur[1] > ac_eur))? color_eur : color_eur2  ,  linewidth=1)
+plot((showUSD or show_all) ? tsi_usd: na, title="USD", color=((slope_usd > 0 and ac_usd[1] < ac_usd) or (slope_usd < 0 and ac_usd[1] > ac_usd))? color_usd : color_usd2  ,  linewidth=1)
+plot((showGBP or show_all) ? tsi_gbp: na, title="GBP", color=((slope_gbp > 0 and ac_gbp[1] < ac_gbp) or (slope_gbp < 0 and ac_gbp[1] > ac_gbp))? color_gbp : color_gbp2  ,  linewidth=1)
+plot((showCHF or show_all) ? tsi_chf: na, title="CHF", color=((slope_chf > 0 and ac_chf[1] < ac_chf) or (slope_chf < 0 and ac_chf[1] > ac_chf))? color_chf : color_chf2  ,  linewidth=1)
+plot((showJPY or show_all) ? tsi_jpy: na, title="JPY", color=((slope_jpy > 0 and ac_jpy[1] < ac_jpy) or (slope_jpy < 0 and ac_jpy[1] > ac_jpy))? color_jpy : color_jpy2  ,  linewidth=1)
+plot((showAUD or show_all) ? tsi_aud: na, title="AUD", color=((slope_aud > 0 and ac_aud[1] < ac_aud) or (slope_aud < 0 and ac_aud[1] > ac_aud))? color_aud : color_aud2  ,  linewidth=1)
+plot((showCAD or show_all) ? tsi_cad: na, title="CAD", color=((slope_cad > 0 and ac_cad[1] < ac_cad) or (slope_cad < 0 and ac_cad[1] > ac_cad))? color_cad : color_cad2  ,  linewidth=1)
+plot((showNZD or show_all) ? tsi_nzd: na, title="NZD", color=((slope_nzd > 0 and ac_nzd[1] < ac_nzd) or (slope_nzd < 0 and ac_nzd[1] > ac_nzd))? color_nzd : color_nzd2  ,  linewidth=1)
+
+u1 = hline(50, "upper1", color=color.rgb(0, 0, 0), linestyle=hline.style_dotted)
+l1 =hline(-50, "lower1", color=color.rgb(0, 0, 0), linestyle=hline.style_dotted)
+zero =hline(0, "zero", color=color.rgb(0, 0, 0), linestyle=hline.style_dotted)
+u2 = hline(25, "upper2", color=color.rgb(0, 0, 0), linestyle=hline.style_solid)
+l2 = hline(-25, "lower2", color=color.rgb(0, 0, 0), linestyle=hline.style_solid)
+fill(u1,u2, title="top", color=color.new(color.gray, 90))
+fill(l1, l2, title="bottom", color=color.new(color.gray, 90))
+
+if show_table and barstate.islast
+    var table ranking_table = table.new(position.middle_right, 3, 8, bgcolor=color.white, border_width=1, border_color=color.black)
+
+    currencies = array.new<float>()
+    currency_names = array.new<string>()
+    currency_colors = array.new<color>()
+    slope_values = array.new<float>()
+
+    array.push(currencies, tsi_eur)
+    array.push(currency_names, "EUR")
+    array.push(slope_values, slope_eur)
+    array.push(currency_colors, color_eur)
+    
+    array.push(currencies, tsi_usd)
+    array.push(currency_names, "USD")
+    array.push(slope_values, slope_usd)    
+    array.push(currency_colors, color_usd)
+    
+    array.push(currencies, tsi_gbp)
+    array.push(currency_names, "GBP")
+    array.push(slope_values, slope_gbp)
+    array.push(currency_colors, color_gbp)
+    
+    array.push(currencies, tsi_jpy)
+    array.push(currency_names, "JPY")
+    array.push(slope_values, slope_jpy)
+    array.push(currency_colors, color_jpy)
+    
+    array.push(currencies, tsi_chf)
+    array.push(currency_names, "CHF")
+    array.push(slope_values, slope_chf)
+    array.push(currency_colors, color_chf)
+    
+    array.push(currencies, tsi_aud)
+    array.push(currency_names, "AUD")
+    array.push(slope_values, slope_aud)
+    array.push(currency_colors, color_aud)
+    
+    array.push(currencies, tsi_cad)
+    array.push(currency_names, "CAD")
+    array.push(slope_values, slope_cad)
+    array.push(currency_colors, color_cad)
+    
+    array.push(currencies, tsi_nzd)
+    array.push(currency_names, "NZD")
+    array.push(slope_values, slope_nzd)
+    array.push(currency_colors, color_nzd)
+    
+    for i = 0 to array.size(slope_values) - 2
+        for j = i + 1 to array.size(slope_values) - 1
+            if array.get(slope_values, i) < array.get(slope_values, j)
+                temp_rsi = array.get(currencies, i)
+                temp_name = array.get(currency_names, i)
+                temp_slope = array.get(slope_values,i)
+                temp_color = array.get(currency_colors, i)
+                
+                array.set(currencies, i, array.get(currencies, j))
+                array.set(currency_names, i, array.get(currency_names, j))
+                array.set(slope_values, i, array.get(slope_values, j))
+                array.set(currency_colors, i, array.get(currency_colors, j))
+                
+                array.set(currencies, j, temp_rsi)
+                array.set(currency_names, j, temp_name)
+                array.set(slope_values, j, temp_slope)
+                array.set(currency_colors, j, temp_color)
+
+    for i = 0 to array.size(currencies) - 1
+        name = array.get(currency_names, i)
+        tsi_val = array.get(currencies, i)
+        slope_value = array.get(slope_values, i)
+        curr_color = array.get(currency_colors, i)
+        
+        tsi_col = tsi_val > 0 ? color.green : tsi_val < 0 ? color.red : color.black
+        slope_col = slope_value > 0 ? color.green : slope_value < 0 ? color.red : color.black
+
+        table.cell(ranking_table, 0, i, name, text_color=curr_color, text_size=size.tiny)
+        table.cell(ranking_table, 1, i, str.tostring(tsi_val, "#.##"), text_color=tsi_col, text_size=size.tiny)
+        table.cell(ranking_table, 2, i, str.tostring(slope_value, "#.##"), text_color=slope_col, text_size=size.tiny)
