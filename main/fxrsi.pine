@@ -1,4 +1,3 @@
-//WOOJIN CHOI, 9/29/2025
 //@version=6
 indicator("FX_RSI", shorttitle = "FXRSI",precision=2, overlay=false)
 
@@ -19,7 +18,6 @@ color_jpy2 = color(color.rgb(231, 140, 4))
 color_aud2 = color(color.rgb(4, 221, 116))
 color_cad2 = color(color.rgb(250, 70, 70))
 color_nzd2 = color(color.rgb(75, 179, 78))
-
 fx_src = input.string("OANDA", title ="FX source", options = ["OANDA", "TASTYFX"])
 eurusd_src = "OANDA:EURUSD"
 eurgbp_src = "OANDA:EURGBP"
@@ -125,6 +123,7 @@ lengthSlope = input.int(2, "Slope Length", group = "Length")
 lengthZscore = input.int(50, "Z-Score Length", group = "Length")
 showAll = input.bool(true, "Show All", group = "Display")
 showTable = input.bool(true, "Show Table", group = "Display")
+apply_zero_sum = input.bool(true, "apply_zero_sum", group = "Display")
 
 zscore(src, length) =>
     mean = ta.ema(src, length)
@@ -148,6 +147,17 @@ rsi_aud = rsi_macd_calc(aud, lengthFast, lengthSlow, lengthSignal)
 rsi_cad = rsi_macd_calc(cad, lengthFast, lengthSlow, lengthSignal)
 rsi_nzd = rsi_macd_calc(nzd, lengthFast, lengthSlow, lengthSignal)
 
+sumRSI = rsi_eur + rsi_usd + rsi_gbp + rsi_chf + rsi_jpy + rsi_aud + rsi_cad + rsi_nzd
+if apply_zero_sum
+    rsi_eur := rsi_eur - sumRSI/8 + 50
+    rsi_usd := rsi_usd - sumRSI/8 + 50
+    rsi_gbp := rsi_gbp - sumRSI/8 + 50
+    rsi_chf := rsi_chf - sumRSI/8 + 50
+    rsi_jpy := rsi_jpy - sumRSI/8 + 50
+    rsi_aud := rsi_aud - sumRSI/8 + 50
+    rsi_cad := rsi_cad - sumRSI/8 + 50
+    rsi_nzd := rsi_nzd - sumRSI/8 + 50
+
 symbol = syminfo.ticker
 upperSymbol = str.upper(symbol)
 
@@ -169,14 +179,14 @@ aud_20 = ta.ema(aud,14)
 cad_20 = ta.ema(cad,14)
 nzd_20 = ta.ema(nzd,14)
 
-slope_eur = (rsi_eur - rsi_eur[lengthSlope])/lengthSlope
-slope_usd = (rsi_usd - rsi_usd[lengthSlope])/lengthSlope
-slope_gbp = (rsi_gbp - rsi_gbp[lengthSlope])/lengthSlope
-slope_chf = (rsi_chf - rsi_chf[lengthSlope])/lengthSlope
-slope_jpy = (rsi_jpy - rsi_jpy[lengthSlope])/lengthSlope
-slope_aud = (rsi_aud - rsi_aud[lengthSlope])/lengthSlope
-slope_cad = (rsi_cad - rsi_cad[lengthSlope])/lengthSlope
-slope_nzd = (rsi_nzd - rsi_nzd[lengthSlope])/lengthSlope
+slope_eur = (rsi_eur - rsi_eur[lengthSlope])
+slope_usd = (rsi_usd - rsi_usd[lengthSlope])
+slope_gbp = (rsi_gbp - rsi_gbp[lengthSlope])
+slope_chf = (rsi_chf - rsi_chf[lengthSlope])
+slope_jpy = (rsi_jpy - rsi_jpy[lengthSlope])
+slope_aud = (rsi_aud - rsi_aud[lengthSlope])
+slope_cad = (rsi_cad - rsi_cad[lengthSlope])
+slope_nzd = (rsi_nzd - rsi_nzd[lengthSlope])
 
 plot(showEUR or showAll ? rsi_eur : na, title="EUR", color= (eur_20 < eur and slope_eur > 0) or (eur_20 > eur and slope_eur < 0) ? color_eur : color_eur2, linewidth=1)
 plot(showUSD or showAll ? rsi_usd : na, title="USD", color= (usd_20 < usd and slope_usd > 0) or (usd_20 > usd and slope_usd < 0) ? color_usd : color_usd2, linewidth=1)
@@ -186,7 +196,7 @@ plot(showJPY or showAll ? rsi_jpy : na, title="JPY", color= (jpy_20 < jpy and sl
 plot(showAUD or showAll ? rsi_aud : na, title="AUD", color= (aud_20 < aud and slope_aud > 0) or (aud_20 > aud and slope_aud < 0) ? color_aud : color_aud2, linewidth=1)
 plot(showCAD or showAll ? rsi_cad : na, title="CAD", color= (cad_20 < cad and slope_cad > 0) or (cad_20 > cad and slope_cad < 0) ? color_cad : color_cad2, linewidth=1)
 plot(showNZD or showAll ? rsi_nzd : na, title="NZD", color= (nzd_20 < nzd and slope_nzd > 0) or (nzd_20 > nzd and slope_nzd < 0) ? color_nzd : color_nzd2, linewidth=1)
-
+//plot(rsi_eur-50+rsi_usd-50+rsi_gbp-50+rsi_chf-50+rsi_jpy-50+rsi_aud-50+rsi_cad-50+rsi_nzd-50)
 u1 = hline(80, "upper1", color=color.rgb(0, 0, 0), linestyle=hline.style_solid)
 l1 =hline(20, "lower1", color=color.rgb(0, 0, 0), linestyle=hline.style_solid)
 u2 = hline(90, "upper2", color=color.rgb(0, 0, 0), linestyle=hline.style_dotted)

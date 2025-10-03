@@ -1,4 +1,4 @@
-//WOOJIN CHOI, 9/29/2025
+//WOOJIN CHOI, 8/13/2025
 //@version=6
 indicator("FX_MACD",shorttitle = "FXMACD", precision=2, overlay=false)
 
@@ -22,6 +22,8 @@ zscore_length = input(title = "Z-score Length", defval = 50, group = "Length")
 showAll = input.bool(true, "Show All", group = "Display")
 showHistogram = input.bool(false, "Show Histogram", group = "Display")
 showTable = input.bool(true, "Show Table", group = "Display")
+apply_zero_sum = input.bool(true, "apply_zero_sum", group = "Display")
+
 eurusd_src = "OANDA:EURUSD"
 eurgbp_src = "OANDA:EURGBP"
 eurchf_src = "OANDA:EURCHF"
@@ -152,23 +154,34 @@ macd_calc(src, fast, slow, sig) =>
 [macd_cad,sig_cad,hist_cad] = macd_calc(cad,fast_length,slow_length,signal_length)
 [macd_nzd,sig_nzd,hist_nzd] = macd_calc(nzd,fast_length,slow_length,signal_length)
 
-// adx_eur = adx_calc("CME:6E1!")
-// adx_usd = adx_calc("ICEUS:DX1!")
-// adx_gbp = adx_calc("CME:6B1!")
-// adx_chf = adx_calc("CME:6S1!")
-// adx_jpy = adx_calc("CME:6J1!")
-// adx_aud = adx_calc("CME:6A1!")
-// adx_cad = adx_calc("CME:6C1!")
-// adx_nzd = adx_calc("CME:6N1!")
-
-// showEUR = input.bool(true, "EUR")
-// showUSD = input.bool(true, "USD")
-// showGBP = input.bool(true, "GBP")
-// showCHF = input.bool(true, "CHF")
-// showJPY = input.bool(true, "JPY")
-// showAUD = input.bool(true, "AUD")
-// showCAD = input.bool(true, "CAD")
-// showNZD = input.bool(true, "NZD")
+sumMacd = macd_eur + macd_usd + macd_gbp + macd_chf + macd_jpy + macd_aud + macd_cad + macd_nzd
+sumSig = sig_eur + sig_usd + sig_gbp + sig_chf + sig_jpy + sig_aud + sig_cad + sig_nzd
+sumHist = hist_eur + hist_usd + hist_gbp + hist_chf + hist_jpy + hist_aud + hist_cad + hist_nzd
+if apply_zero_sum
+    macd_eur := macd_eur - sumMacd/8
+    macd_usd := macd_usd - sumMacd/8
+    macd_gbp := macd_gbp - sumMacd/8
+    macd_chf := macd_chf - sumMacd/8
+    macd_jpy := macd_jpy - sumMacd/8
+    macd_aud := macd_aud - sumMacd/8
+    macd_cad := macd_cad - sumMacd/8
+    macd_nzd := macd_nzd - sumMacd/8
+    sig_eur := sig_eur - sumSig/8
+    sig_usd := sig_usd - sumSig/8
+    sig_gbp := sig_gbp - sumSig/8
+    sig_chf := sig_chf - sumSig/8
+    sig_jpy := sig_jpy - sumSig/8
+    sig_aud := sig_aud - sumSig/8
+    sig_cad := sig_cad - sumSig/8
+    sig_nzd := sig_nzd - sumSig/8
+    hist_eur := hist_eur - sumHist/8
+    hist_usd := hist_usd - sumHist/8
+    hist_gbp := hist_gbp - sumHist/8
+    hist_chf := hist_chf - sumHist/8
+    hist_jpy := hist_jpy - sumHist/8
+    hist_aud := hist_aud - sumHist/8
+    hist_cad := hist_cad - sumHist/8
+    hist_nzd := hist_nzd - sumHist/8
 
 symbol = syminfo.ticker
 upperSymbol = str.upper(symbol)
@@ -208,6 +221,10 @@ fill(macd_plot_jpy,sig_plot_jpy, title="jpy plot", color=color.new(color_jpy,80)
 fill(macd_plot_aud,sig_plot_aud, title="aud plot", color=color.new(color_aud,80))
 fill(macd_plot_cad,sig_plot_cad, title="cad plot", color=color.new(color_cad,80))
 fill(macd_plot_nzd,sig_plot_nzd, title="nzd plot", color=color.new(color_nzd,80))
+
+// plot(sig_eur+sig_usd+sig_gbp+sig_chf+sig_jpy+sig_aud+sig_cad+sig_nzd)
+// plot(macd_eur+macd_usd+macd_gbp+macd_chf+macd_jpy+macd_aud+macd_cad+macd_nzd)
+// plot(hist_eur+hist_usd+hist_gbp+hist_chf+hist_jpy+hist_aud+hist_cad+hist_nzd)
 plot((showEUR or showAll) and showHistogram ? hist_eur : na, title="EUR hist", color= showEUR ? color.new(color_eur,40) : color.new(color_eur,40), linewidth=1, style = plot.style_columns)
 plot((showUSD or showAll) and showHistogram ? hist_usd : na, title="USD hist", color= showUSD ? color.new(color_usd,40) : color.new(color_usd,40), linewidth=1, style = plot.style_columns)
 plot((showGBP or showAll) and showHistogram ? hist_gbp : na, title="GBP hist", color= showGBP ? color.new(color_gbp,40) : color.new(color_gbp,40), linewidth=1, style = plot.style_columns)
@@ -227,14 +244,14 @@ fill(u1,u2, title="top", color=color.new(color.gray, 85))
 fill(l1, l2, title="bottom", color=color.new(color.gray, 85))
 
 
-slope_eur = (macd_eur*10 - macd_eur[slope_length]*10) /slope_length
-slope_usd = (macd_usd*10 - macd_usd[slope_length]*10) /slope_length
-slope_gbp = (macd_gbp*10 - macd_gbp[slope_length]*10) /slope_length
-slope_chf = (macd_chf*10 - macd_chf[slope_length]*10) /slope_length
-slope_jpy = (macd_jpy*10 - macd_jpy[slope_length]*10) /slope_length
-slope_aud = (macd_aud*10 - macd_aud[slope_length]*10) /slope_length
-slope_cad = (macd_cad*10 - macd_cad[slope_length]*10) /slope_length
-slope_nzd = (macd_nzd*10 - macd_nzd[slope_length]*10) /slope_length
+slope_eur = (macd_eur*10 - macd_eur[slope_length]*10)
+slope_usd = (macd_usd*10 - macd_usd[slope_length]*10)
+slope_gbp = (macd_gbp*10 - macd_gbp[slope_length]*10)
+slope_chf = (macd_chf*10 - macd_chf[slope_length]*10)
+slope_jpy = (macd_jpy*10 - macd_jpy[slope_length]*10)
+slope_aud = (macd_aud*10 - macd_aud[slope_length]*10)
+slope_cad = (macd_cad*10 - macd_cad[slope_length]*10)
+slope_nzd = (macd_nzd*10 - macd_nzd[slope_length]*10)
 //--------------------------------------------------TABLE
 if showTable and barstate.islast
     var table ranking_table = table.new(position.middle_right, 3, 8, bgcolor=color.white, border_width=1, border_color=color.black)
