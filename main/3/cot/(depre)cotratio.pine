@@ -1,0 +1,107 @@
+//WOOJIN CHOI, 10/06/2025
+//@version=6
+
+indicator("COT Ratio", shorttitle="COT_Ratio",overlay = false)
+
+bool hideCurrentWeek = true
+bool showCommercials = true
+bool showLarge = true
+color_usd = color(#0717ff)
+color_eur = color(#4dd0e1)
+color_gbp = color(#9C27B0)
+color_jpy = color(#FF9800)
+color_cad = color(#ff0000)
+color_aud = color(#04dd74)
+color_nzd = color(#22ab94)
+color_chf = color(#E040FB)
+
+import TradingView/LibraryCOT/2 as cot
+
+var string Root_Symbol = syminfo.root
+
+isForex = syminfo.type == "forex"
+var string CFTC_Code_base = isForex ? cot.convertRootToCOTCode("Base currency") : cot.convertRootToCOTCode("Auto") 
+var string CFTC_Code_quote =  isForex ? cot.convertRootToCOTCode("Currency")  : cot.convertRootToCOTCode("Auto")
+
+string code_option = input.string("Base", options = ["Base", "Quote"], title="Currency")
+showRaw = input.bool(false, "Show Raw Data")
+
+CFTC_Code_fixed = code_option == "Base" ? CFTC_Code_base : code_option == "Quote" ?CFTC_Code_quote : cot.convertRootToCOTCode("Auto")
+dataRequest(code, metricName, direction) =>
+    tickerId = cot.COTTickerid("Financial", code, false, metricName, direction, "All")
+    value = request.security(tickerId, "1D", close, ignore_invalid_symbol = true)
+    if barstate.islastconfirmedhistory and na(value)
+        runtime.error("Could not find relevant COT data based on the current symbol.")
+    value
+
+net(code, option) =>
+    long = dataRequest(code, option, "Long") 
+    short = dataRequest(code, option, "Short")
+    long - short
+
+symbol = syminfo.ticker
+upperSymbol = str.upper(symbol)
+sym = code_option == "Base" ? str.substring(symbol, 0, 3) : str.substring(symbol, 3, 6) 
+
+show_eur = str.contains(sym, "EUR")
+show_usd = str.contains(sym, "USD")
+show_gbp = str.contains(sym, "GBP")
+show_chf = str.contains(sym, "CHF")
+show_jpy = str.contains(sym, "JPY")
+show_aud = str.contains(sym, "AUD")
+show_cad = str.contains(sym, "CAD")
+show_nzd = str.contains(sym, "NZD")
+
+lev_data = hideCurrentWeek  ? (timenow >= time_close ?  net(CFTC_Code_fixed,"Leveraged Funds Positions") : na) : na
+ass_data = hideCurrentWeek  ? (timenow >= time_close ?  net(CFTC_Code_fixed,"Asset Manager Positions") : na) : na
+dea_data = hideCurrentWeek  ? (timenow >= time_close ?  net(CFTC_Code_fixed,"Dealer Positions") : na) : na
+oi_data =  hideCurrentWeek ? (timenow >= time_close ?  dataRequest(CFTC_Code_fixed,"Open Interest","No direction") : na) : na
+
+plot(showRaw ? lev_data/oi_data*100: na, title="lev", color=color.red, linewidth=1)
+plot(showRaw ? ass_data/oi_data*100: na, title="asset", color=color.orange, linewidth=1)
+plot(showRaw ? -(dea_data/oi_data*100): na, title="deal", color=color.blue, linewidth=1)
+lev_mom = ta.change(lev_data/oi_data*100)
+ass_mom = ta.change(ass_data/oi_data*100)
+dea_mom = -ta.change(dea_data/oi_data*100)  // inverse
+
+
+plot( lev_mom, color=color.new(color.red, 30), title="Lev Δ", style=plot.style_columns)
+plot( ass_mom, color=color.new(color.orange, 30), title="Asset Δ", style=plot.style_columns)
+plot( dea_mom, color=color.new(color.blue, 50), title="Dealer Δ", style=plot.style_columns)
+
+
+hline(0.0,color = color.black)
+codeToCurrency(string code) =>
+    string currency = switch code
+        "133741" => "BTC"
+        "098662" => "USD"
+        "099741" => "EUR"
+        "097741" => "JPY"
+        "095741" => "MXN"
+        "092741" => "CHF"
+        "089741" => "RUB"
+        "090741" => "CAD"
+        "112741" => "NZD"
+        "096742" => "GBP"
+        "102741" => "BRL"
+        "122741" => "ZAR"
+        "232741" => "AUD"
+        "146021" => "ETH"
+        => code
+    currency
+
+var table symbolDisplay = table.new(position.bottom_right, 2, 2)
+
+if barstate.islast
+    color TEXT_COLOR = color.white
+    color BG_COLOR = color.new(color.black, 50)
+    color WARN_COLOR = color.new(color.orange, 30)
+    
+
+    string currency = codeToCurrency(CFTC_Code_fixed)
+    string header = str.format("{0}", currency)
+    
+    // Header
+    table.cell(symbolDisplay, 1, 0, header, text_halign=text.align_right, text_color=TEXT_COLOR, bgcolor=BG_COLOR, text_size=size.tiny)
+    table.cell(symbolDisplay, 0, 1, "CFTC Code", text_halign=text.align_left, text_color=TEXT_COLOR, bgcolor=BG_COLOR, text_size=size.tiny)
+    table.cell(symbolDisplay, 1, 1, CFTC_Code_base, text_halign=text.align_right, text_color=TEXT_COLOR, bgcolor=BG_COLOR, text_size=size.tiny)

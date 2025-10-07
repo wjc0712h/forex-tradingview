@@ -1,0 +1,110 @@
+//@version=5
+//source : https://www.tradingview.com/script/fNXYgVXt-ILM-Seasonality-Monthly-Day-of-Month-Tabular-Form/
+indicator("Seasonality Monthly", format = format.volume)
+
+if not timeframe.isdaily
+    runtime.error("Please switch timeframe to Daily")
+
+i_year_start = input.int(2015, "Start Year")
+i_month = input.int(1, "Month", minval = 1, maxval = 12, step = 1)
+i_cum = input.bool(false, "Cumulative")
+i_text_size = input.string(size.small, "Text Size", [size.auto, size.tiny, size.small, size.normal, size.large, size.huge])
+
+//--------------------------------------------------------Functions----------------------------------------------------
+f_array_stats(array_) =>
+    count_pos_ = 0
+    count_neg_= 0
+    count_ = 0
+    sum_  = 0.0
+    if not na(array_) and array.size(array_) > 0
+        for i_ = 0 to array.size(array_) - 1
+            elem_ = array.get(array_, i_)
+            if not na(elem_)
+                sum_ += elem_
+                count_ += 1
+                switch
+                    elem_ > 0 => count_pos_ += 1
+                    elem_ < 0 => count_neg_ += 1  
+    avg_ = count_ > 0.0 ? sum_ / count_ : 0.0 
+    [sum_, avg_, count_, count_pos_, count_neg_]
+
+f_month_str(month_) =>
+    switch month_
+        1 => "January"    
+        2 => "February"    
+        3 => "March"    
+        4 => "April"    
+        5 => "May"    
+        6 => "June"    
+        7 => "July"    
+        8 => "August"    
+        9 => "September"    
+        10 => "October"    
+        11 => "November"    
+        12 => "December"    
+
+f_bg_color(val_) =>
+    switch 
+        val_ > 0 => color.new(color.green,50)
+        val_ < 0 => color.new(color.red,50)
+        => color.new(color.gray,50)
+//-------------------------------------------------------------------------------------------------------------------    
+
+var year_start_ = math.max(year, i_year_start)
+var no_years_ = year(timenow) - year_start_ + 1
+var matrix<float> data_  =  matrix.new<float>(no_years_,31,na)
+var table table_ = na
+var text_color_ = color.white
+var bg_color_ = color.gray
+
+chg_pct_ = nz(close/close[1]-1)
+
+if year >= year_start_ and month(time_close) == i_month
+    cur_val_ = nz(matrix.get(data_, year-year_start_, dayofmonth(time_close)-1))
+    matrix.set(data_, year-year_start_, dayofmonth(time_close)-1, cur_val_ + chg_pct_)
+
+if barstate.islast
+    table_ := table.new(position.middle_center, 31+1, year - year_start_ + 8, border_width = 1)
+    table.cell(table_, 0, 0, syminfo.prefix + ":" + syminfo.ticker + " - " + f_month_str(i_month), text_color = color.white, bgcolor = color.blue, text_size = i_text_size)
+    table.merge_cells(table_,0,0,31,0)
+    table.cell(table_, 0, 1, "Day", text_color = text_color_, bgcolor = bg_color_, text_size = i_text_size)
+
+    for col_ = 1 to 31
+        table.cell(table_, col_, 1, str.format("{0}",col_), text_color = text_color_, bgcolor = bg_color_, text_size = i_text_size)
+
+    for row_ = 0 to no_years_ - 1
+        table.cell(table_, 0, 2+row_, str.tostring(row_ + year_start_), text_color = text_color_, bgcolor = bg_color_, text_size = i_text_size)
+        cum_  = 0.0
+        for col_ = 1 to 31
+            val_ = matrix.get(data_, row_, col_-1)
+            if not na(val_)
+                if i_cum
+                    cum_ += val_
+                    val_ := cum_
+                val_color_ = val_ > 0 ? color.green : val_ < 0 ? color.red : color.gray 
+                if year == row_ + year_start_ and month(time_close) == i_month and col_ > dayofmonth(time_close)
+                    //Dont update for future dates
+                    true
+                else
+                    table.cell(table_, col_, 2+row_, str.format("{0,number,###.##%}", val_), bgcolor = color.new(val_color_,80), text_color = val_color_, text_size = i_text_size)
+                true
+
+    //Aggregates
+    row_ = no_years_ + 2
+    table.cell(table_, 0, row_, "AVG", text_color = text_color_, bgcolor = bg_color_, text_size = i_text_size)
+    table.cell(table_, 0, row_+1, "SUM", text_color = text_color_, bgcolor = bg_color_, text_size = i_text_size)
+    table.cell(table_, 0, row_+2, "+ive", text_color = text_color_, bgcolor = bg_color_, text_size = i_text_size)
+    table.cell(table_, 0, row_+3, "CUM", text_color = text_color_, bgcolor = bg_color_, text_size = i_text_size)
+    cum_ = 0.0
+    for col_ = 1 to 31
+        arr_ = matrix.col(data_, col_-1) 
+        [sum_, avg_, count_, count_pos_, count_neg_] = f_array_stats(arr_)
+        if count_ > 0        
+            cum_ += nz(avg_)
+            val_color_ = sum_ > 0 ? color.green : sum_ < 0 ? color.red : color.gray 
+            table.cell(table_, col_, row_, str.format("{0,number,###.##%}", avg_), bgcolor = color.new(val_color_,50), text_color = color.new(color.white, 50), text_size = i_text_size)
+            table.cell(table_, col_, row_+1, str.format("{0,number,###.##%}", sum_), bgcolor = color.new(val_color_,50), text_color = color.new(color.white, 50), text_size = i_text_size)
+            table.cell(table_, col_, row_+2, str.format("{0}/{1}", count_pos_, count_), bgcolor = color.new(val_color_,50), text_color = color.new(color.white, 50), text_size = i_text_size)
+            table.cell(table_, col_, row_+3, str.format("{0,number,###.##%}", cum_), bgcolor = f_bg_color(cum_), text_color = color.new(color.white, 50), text_size = i_text_size)
+            true
+

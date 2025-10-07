@@ -1,0 +1,33 @@
+//@version=5
+indicator("Monthly Background Color", shorttitle="Monthly BG", overlay=true)
+
+// Inputs
+target_months = input.string("3,6,9,12", "Target Months (comma separated)", tooltip="Enter months as numbers: 1=Jan, 12=Dec")
+bg_color = input.color(color.new(color.yellow, 85), "Background Color")
+show_labels = input.bool(true, "Show Month Labels")
+
+// Parse months
+month_array = str.split(target_months, ",")
+is_target = false
+current_month = month(time)
+
+for m in month_array
+    if current_month == str.tonumber(m)
+        is_target := true
+        break
+
+// Apply background color
+bgcolor(is_target ? bg_color : na, title="Month Highlight")
+
+// Label at first bar of target month
+month_names = array.from("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
+is_first_bar = is_target and not is_target[1]
+
+if show_labels and is_first_bar
+    label.new(bar_index, high, 
+              array.get(month_names, current_month - 1), 
+              style=label.style_label_down, 
+              color=color.new(bg_color, 0), 
+              textcolor=color.black,
+              size=size.small,
+              tooltip="Month: " + str.tostring(current_month))

@@ -1,0 +1,264 @@
+//WOOJIN CHOI, 10/05/2025
+//@version=6
+indicator("Forex Moving Average Convergence Divergence",shorttitle = "FXMACD", overlay=false)
+
+prefix = input.string(title = "FX source", defval = "OANDA", options = ["OANDA", "TASTYFX"])
+slow_length = input(title = "Slow Length", defval = 26, group= "Settings")
+fast_length = input(title = "Fast Length", defval = 12, group= "Settings")
+signal_length = input(title = "Signal Length", defval = 9, group= "Settings")
+zscore_length = input(title = "Z-score Length", defval = 50, group= "Settings")
+slope_length = input(title = "Slope Length", defval = 2, group= "Settings")
+
+show_all = input.bool(true, "Show All", group="Display")
+show_table = input.bool(true, "Show Table",  group="Display")
+
+showMACD = input.bool(true,"Show MACD", group = "Display")
+showSig = input.bool(true,"Show Signal", group = "Display")
+showHistogram = input.bool(false, "Show Histogram", group = "Display")
+apply_zero_sum = input.bool(true, "Apply Zero-sum", group = "Display")
+
+color_usd = color(#0717ff)
+color_eur = color(#4dd0e1)
+color_gbp = color(#9C27B0)
+color_jpy = color(#FF9800)
+color_cad = color(#ff0000)
+color_aud = color(#04dd74)
+color_nzd = color(#22ab94)
+color_chf = color(#E040FB)
+
+eurusd = request.security(prefix + ":eurusd", timeframe.period, close)
+eurgbp = request.security(prefix + ":eurgbp", timeframe.period, close)
+eurchf = request.security(prefix + ":eurchf", timeframe.period, close)
+eurjpy = request.security(prefix + ":eurjpy", timeframe.period, close) / 100
+euraud = request.security(prefix + ":euraud", timeframe.period, close)
+eurcad = request.security(prefix + ":eurcad", timeframe.period, close)
+eurnzd = request.security(prefix + ":eurnzd", timeframe.period, close)
+usdchf = request.security(prefix + ":usdchf", timeframe.period, close)
+usdjpy = request.security(prefix + ":usdjpy", timeframe.period, close) / 100
+usdcad = request.security(prefix + ":usdcad", timeframe.period, close)
+gbpusd = request.security(prefix + ":gbpusd", timeframe.period, close)
+gbpchf = request.security(prefix + ":gbpchf", timeframe.period, close)
+gbpjpy = request.security(prefix + ":gbpjpy", timeframe.period, close) / 100
+gbpaud = request.security(prefix + ":gbpaud", timeframe.period, close)
+gbpcad = request.security(prefix + ":gbpcad", timeframe.period, close)
+gbpnzd = request.security(prefix + ":gbpnzd", timeframe.period, close)
+chfjpy = request.security(prefix + ":chfjpy", timeframe.period, close) / 100
+audusd = request.security(prefix + ":audusd", timeframe.period, close)
+audchf = request.security(prefix + ":audchf", timeframe.period, close)
+audjpy = request.security(prefix + ":audjpy", timeframe.period, close) / 100
+audcad = request.security(prefix + ":audcad", timeframe.period, close)
+audnzd = request.security(prefix + ":audnzd", timeframe.period, close)
+cadchf = request.security(prefix + ":cadchf", timeframe.period, close)
+cadjpy = request.security(prefix + ":cadjpy", timeframe.period, close) / 100
+nzdusd = request.security(prefix + ":nzdusd", timeframe.period, close)
+nzdchf = request.security(prefix + ":nzdchf", timeframe.period, close)
+nzdjpy = request.security(prefix + ":nzdjpy", timeframe.period, close) / 100
+nzdcad = request.security(prefix + ":nzdcad", timeframe.period, close)
+
+usd = (-eurusd * 0.40 - gbpusd * 0.20 + usdjpy * 0.25 + usdchf * 0.05 - audusd * 0.07 + usdcad * 0.02 - nzdusd * 0.01)
+eur = ( eurusd * 0.50 + eurjpy * 0.20 + eurgbp * 0.15 + eurchf * 0.05 + euraud * 0.05 + eurcad * 0.03 + eurnzd * 0.02)
+gbp = (-eurgbp * 0.12 + gbpusd * 0.45 + gbpjpy * 0.20 + gbpchf * 0.08 + gbpaud * 0.08 + gbpcad * 0.04 + gbpnzd * 0.03)
+jpy = (-eurjpy * 0.20 - usdjpy * 0.40 - gbpjpy * 0.20 - audjpy * 0.10 - cadjpy * 0.05 - chfjpy * 0.03 - nzdjpy * 0.02)
+cad = (-eurcad * 0.05 - usdcad * 0.58 - gbpcad * 0.08 + cadchf * 0.05 + cadjpy * 0.08 - audcad * 0.10 - nzdcad * 0.06)
+aud = (-euraud * 0.08 + audusd * 0.52 - gbpaud * 0.15 + audchf * 0.05 + audjpy * 0.10 + audcad * 0.06 + audnzd * 0.04)
+nzd = (-eurnzd * 0.03 + nzdusd * 0.58 - gbpnzd * 0.08 + nzdchf * 0.05 + nzdjpy * 0.08 - audnzd * 0.12 + nzdcad * 0.06)
+chf = (-eurchf * 0.25 - usdchf * 0.40 - gbpchf * 0.15 + chfjpy * 0.08 - audchf * 0.05 - cadchf * 0.04 - nzdchf * 0.03)
+
+zscore(src, length) =>
+    mean = ta.ema(src, length)
+    stddev = ta.stdev(src, length)
+    (src - mean) / stddev
+
+macd_calc(src, fast, slow, sig) =>
+    fast_ma = ta.ema(src, fast)
+    slow_ma = ta.ema(src, slow)
+    macd = zscore(fast_ma - slow_ma, zscore_length)
+    signal = ta.ema(macd, sig)
+    hist = macd - signal
+    [macd,signal,hist]
+
+[macd_usd,sig_usd,hist_usd] = macd_calc(usd,fast_length,slow_length,signal_length)
+[macd_eur,sig_eur,hist_eur] = macd_calc(eur,fast_length,slow_length,signal_length)
+[macd_gbp,sig_gbp,hist_gbp] = macd_calc(gbp,fast_length,slow_length,signal_length)
+[macd_jpy,sig_jpy,hist_jpy] = macd_calc(jpy,fast_length,slow_length,signal_length)
+[macd_cad,sig_cad,hist_cad] = macd_calc(cad,fast_length,slow_length,signal_length)
+[macd_aud,sig_aud,hist_aud] = macd_calc(aud,fast_length,slow_length,signal_length)
+[macd_nzd,sig_nzd,hist_nzd] = macd_calc(nzd,fast_length,slow_length,signal_length)
+[macd_chf,sig_chf,hist_chf] = macd_calc(chf,fast_length,slow_length,signal_length)
+
+if apply_zero_sum
+    meanMACD = (macd_eur + macd_usd + macd_gbp + macd_chf + macd_jpy + macd_aud + macd_cad + macd_nzd)/8
+    sumSIG = (sig_eur + sig_usd + sig_gbp + sig_chf + sig_jpy + sig_aud + sig_cad + sig_nzd)/8
+    sumHIST = (hist_eur + hist_usd + hist_gbp + hist_chf + hist_jpy + hist_aud + hist_cad + hist_nzd)/8
+    macd_eur := macd_eur - meanMACD
+    macd_usd := macd_usd - meanMACD
+    macd_gbp := macd_gbp - meanMACD
+    macd_chf := macd_chf - meanMACD
+    macd_jpy := macd_jpy - meanMACD
+    macd_aud := macd_aud - meanMACD
+    macd_cad := macd_cad - meanMACD
+    macd_nzd := macd_nzd - meanMACD
+    sig_eur := sig_eur - sumSIG
+    sig_usd := sig_usd - sumSIG
+    sig_gbp := sig_gbp - sumSIG
+    sig_chf := sig_chf - sumSIG
+    sig_jpy := sig_jpy - sumSIG
+    sig_aud := sig_aud - sumSIG
+    sig_cad := sig_cad - sumSIG
+    sig_nzd := sig_nzd - sumSIG
+    hist_eur := hist_eur - sumHIST
+    hist_usd := hist_usd - sumHIST
+    hist_gbp := hist_gbp - sumHIST
+    hist_chf := hist_chf - sumHIST
+    hist_jpy := hist_jpy - sumHIST
+    hist_aud := hist_aud - sumHIST
+    hist_cad := hist_cad - sumHIST
+    hist_nzd := hist_nzd - sumHIST
+
+symbol = syminfo.ticker
+upperSymbol = str.upper(symbol)
+
+showEUR = str.contains(upperSymbol, "EUR")
+showUSD = str.contains(upperSymbol, "USD")
+showGBP = str.contains(upperSymbol, "GBP")
+showJPY = str.contains(upperSymbol, "JPY")
+showCHF = str.contains(upperSymbol, "CHF")
+showAUD = str.contains(upperSymbol, "AUD")
+showCAD = str.contains(upperSymbol, "CAD")
+showNZD = str.contains(upperSymbol, "NZD")
+
+macd_plot_eur = plot((showEUR or show_all) and showMACD ? macd_eur : na, title="EUR macd", color= color_eur, linewidth=2)
+macd_plot_usd = plot((showUSD or show_all) and showMACD ? macd_usd : na, title="USD macd", color= color_usd, linewidth=2)
+macd_plot_gbp = plot((showGBP or show_all) and showMACD ? macd_gbp : na, title="GBP macd", color= color_gbp, linewidth=2)
+macd_plot_chf = plot((showCHF or show_all) and showMACD ? macd_chf : na, title="CHF macd", color= color_chf, linewidth=2)
+macd_plot_jpy = plot((showJPY or show_all) and showMACD ? macd_jpy : na, title="JPY macd", color= color_jpy, linewidth=2)
+macd_plot_aud = plot((showAUD or show_all) and showMACD ? macd_aud : na, title="AUD macd", color= color_aud, linewidth=2)
+macd_plot_cad = plot((showCAD or show_all) and showMACD ? macd_cad : na, title="CAD macd", color= color_cad, linewidth=2)
+macd_plot_nzd = plot((showNZD or show_all) and showMACD ? macd_nzd : na, title="NZD macd", color= color_nzd, linewidth=2)
+
+sig_plot_eur = plot((showEUR or show_all) and showSig ? sig_eur : na, title="EUR sig", color= color.new(color_eur,50), linewidth=1)
+sig_plot_usd = plot((showUSD or show_all) and showSig ? sig_usd : na, title="USD sig", color= color.new(color_usd,50), linewidth=1)
+sig_plot_gbp = plot((showGBP or show_all) and showSig ? sig_gbp : na, title="GBP sig", color= color.new(color_gbp,50), linewidth=1)
+sig_plot_chf = plot((showCHF or show_all) and showSig ? sig_chf : na, title="CHF sig", color= color.new(color_chf,50), linewidth=1)
+sig_plot_jpy = plot((showJPY or show_all) and showSig ? sig_jpy : na, title="JPY sig", color= color.new(color_jpy,50), linewidth=1)
+sig_plot_aud = plot((showAUD or show_all) and showSig ? sig_aud : na, title="AUD sig", color= color.new(color_aud,50), linewidth=1)
+sig_plot_cad = plot((showCAD or show_all) and showSig ? sig_cad : na, title="CAD sig", color= color.new(color_cad,50), linewidth=1)
+sig_plot_nzd = plot((showNZD or show_all) and showSig ? sig_nzd : na, title="NZD sig", color= color.new(color_nzd,50), linewidth=1)
+
+plot((showEUR or show_all) and showHistogram ? hist_eur : na, title="EUR hist", color= color.new(color_eur,40), linewidth=1, style = plot.style_columns)
+plot((showUSD or show_all) and showHistogram ? hist_usd : na, title="USD hist", color= color.new(color_usd,40), linewidth=1, style = plot.style_columns)
+plot((showGBP or show_all) and showHistogram ? hist_gbp : na, title="GBP hist", color= color.new(color_gbp,40), linewidth=1, style = plot.style_columns)
+plot((showCHF or show_all) and showHistogram ? hist_chf : na, title="CHF hist", color= color.new(color_chf,40), linewidth=1, style = plot.style_columns)
+plot((showJPY or show_all) and showHistogram ? hist_jpy : na, title="JPY hist", color= color.new(color_jpy,40), linewidth=1, style = plot.style_columns)
+plot((showAUD or show_all) and showHistogram ? hist_aud : na, title="AUD hist", color= color.new(color_aud,40), linewidth=1, style = plot.style_columns)
+plot((showCAD or show_all) and showHistogram ? hist_cad : na, title="CAD hist", color= color.new(color_cad,40), linewidth=1, style = plot.style_columns)
+plot((showNZD or show_all) and showHistogram ? hist_nzd : na, title="NZD hist", color= color.new(color_nzd,40), linewidth=1, style = plot.style_columns)
+
+fill(macd_plot_eur,sig_plot_eur, title="eur plot", color=color.new(color_eur,90))
+fill(macd_plot_usd,sig_plot_usd, title="usd plot", color=color.new(color_usd,90))
+fill(macd_plot_gbp,sig_plot_gbp, title="gbp plot", color=color.new(color_gbp,90))
+fill(macd_plot_chf,sig_plot_chf, title="chf plot", color=color.new(color_chf,90))
+fill(macd_plot_jpy,sig_plot_jpy, title="jpy plot", color=color.new(color_jpy,90))
+fill(macd_plot_aud,sig_plot_aud, title="aud plot", color=color.new(color_aud,90))
+fill(macd_plot_cad,sig_plot_cad, title="cad plot", color=color.new(color_cad,90))
+fill(macd_plot_nzd,sig_plot_nzd, title="nzd plot", color=color.new(color_nzd,90))
+
+// plot(sig_eur+sig_usd+sig_gbp+sig_chf+sig_jpy+sig_aud+sig_cad+sig_nzd)
+// plot(macd_eur+macd_usd+macd_gbp+macd_chf+macd_jpy+macd_aud+macd_cad+macd_nzd)
+// plot(hist_eur+hist_usd+hist_gbp+hist_chf+hist_jpy+hist_aud+hist_cad+hist_nzd)
+zero = hline(0, "zero", color=color.rgb(0, 0, 0), linestyle=hline.style_dotted)
+u1 = hline(2, "upper 1", color=color.rgb(0, 0, 0), linestyle=hline.style_dotted)
+l1 =hline(-2, "lower 1", color=color.rgb(0, 0, 0), linestyle=hline.style_dotted)
+u2 = hline(3, "upper 2", color=color.rgb(0, 0, 0), linestyle=hline.style_solid)
+l2 = hline(-3, "lower 2", color=color.rgb(0, 0, 0), linestyle=hline.style_solid)
+
+fill(u1,u2, title="top fill", color=color.new(#000000, 93))
+fill(l1, l2, title="bot fill", color=color.new(#000000, 93))
+
+slope_eur = (macd_eur*10 - macd_eur[slope_length]*10)
+slope_usd = (macd_usd*10 - macd_usd[slope_length]*10)
+slope_gbp = (macd_gbp*10 - macd_gbp[slope_length]*10)
+slope_chf = (macd_chf*10 - macd_chf[slope_length]*10)
+slope_jpy = (macd_jpy*10 - macd_jpy[slope_length]*10)
+slope_aud = (macd_aud*10 - macd_aud[slope_length]*10)
+slope_cad = (macd_cad*10 - macd_cad[slope_length]*10)
+slope_nzd = (macd_nzd*10 - macd_nzd[slope_length]*10)
+//--------------------------------------------------TABLE
+if show_table and barstate.islast
+    var table ranking_table = table.new(position.middle_right, 3, 8, bgcolor=color.white, border_width=1, border_color=color.black)
+
+    currencies = array.new<float>()
+    currency_names = array.new<string>()
+    currency_colors = array.new<color>()
+    slope_values = array.new<float>()
+
+    array.push(currencies, macd_eur)
+    array.push(currency_names, "EUR")
+    array.push(slope_values, slope_eur)
+    array.push(currency_colors, color_eur)
+    
+    array.push(currencies, macd_usd)
+    array.push(currency_names, "USD")
+    array.push(slope_values, slope_usd)    
+    array.push(currency_colors, color_usd)
+    
+    array.push(currencies, macd_gbp)
+    array.push(currency_names, "GBP")
+    array.push(slope_values, slope_gbp)
+    array.push(currency_colors, color_gbp)
+    
+    array.push(currencies, macd_jpy)
+    array.push(currency_names, "JPY")
+    array.push(slope_values, slope_jpy)
+    array.push(currency_colors, color_jpy)
+    
+    array.push(currencies, macd_chf)
+    array.push(currency_names, "CHF")
+    array.push(slope_values, slope_chf)
+    array.push(currency_colors, color_chf)
+    
+    array.push(currencies, macd_aud)
+    array.push(currency_names, "AUD")
+    array.push(slope_values, slope_aud)
+    array.push(currency_colors, color_aud)
+    
+    array.push(currencies, macd_cad)
+    array.push(currency_names, "CAD")
+    array.push(slope_values, slope_cad)
+    array.push(currency_colors, color_cad)
+    
+    array.push(currencies, macd_nzd)
+    array.push(currency_names, "NZD")
+    array.push(slope_values, slope_nzd)
+    array.push(currency_colors, color_nzd)
+    
+    for i = 0 to array.size(slope_values) - 2
+        for j = i + 1 to array.size(slope_values) - 1
+            if array.get(slope_values, i) < array.get(slope_values, j)
+                temp_macd = array.get(currencies, i)
+                temp_name = array.get(currency_names, i)
+                temp_slope = array.get(slope_values,i)
+                temp_color = array.get(currency_colors, i)
+                
+                array.set(currencies, i, array.get(currencies, j))
+                array.set(currency_names, i, array.get(currency_names, j))
+                array.set(slope_values, i, array.get(slope_values, j))
+                array.set(currency_colors, i, array.get(currency_colors, j))
+                
+                array.set(currencies, j, temp_macd)
+                array.set(currency_names, j, temp_name)
+                array.set(slope_values, j, temp_slope)
+                array.set(currency_colors, j, temp_color)
+
+    for i = 0 to array.size(currencies) - 1
+        name = array.get(currency_names, i)
+        macd_val = array.get(currencies, i)
+        slope_value = array.get(slope_values, i)
+        curr_color = array.get(currency_colors, i)
+        
+        macd_col = macd_val > 0 ? color.green : macd_val < 0 ? color.red : color.black
+        slope_col = slope_value > 0 ? color.green : slope_value < 0 ? color.red : color.black
+
+        table.cell(ranking_table, 0, i, name, text_color=curr_color, text_size=size.tiny)
+        table.cell(ranking_table, 1, i, str.tostring(macd_val, "#.##"), text_color=macd_col, text_size=size.tiny)
+        table.cell(ranking_table, 2, i, str.tostring(slope_value, "#.##"), text_color=slope_col, text_size=size.tiny)

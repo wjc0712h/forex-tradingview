@@ -1,0 +1,8 @@
+usd = (-eurusd * 0.40 - gbpusd * 0.20 + usdjpy * 0.25 + usdchf * 0.05 - audusd * 0.07 + usdcad * 0.02 - nzdusd * 0.01)
+eur = ( eurusd * 0.50 + eurjpy * 0.20 + eurgbp * 0.15 + eurchf * 0.05 + euraud * 0.05 + eurcad * 0.03 + eurnzd * 0.02)
+gbp = (-eurgbp * 0.12 + gbpusd * 0.45 + gbpjpy * 0.20 + gbpchf * 0.08 + gbpaud * 0.08 + gbpcad * 0.04 + gbpnzd * 0.03)
+jpy = (-eurjpy * 0.20 - usdjpy * 0.40 - gbpjpy * 0.20 - audjpy * 0.10 - cadjpy * 0.05 - chfjpy * 0.03 - nzdjpy * 0.02)
+cad = (-eurcad * 0.05 - usdcad * 0.58 - gbpcad * 0.08 + cadchf * 0.05 + cadjpy * 0.08 - audcad * 0.10 - nzdcad * 0.06)
+aud = (-euraud * 0.08 + audusd * 0.52 - gbpaud * 0.15 + audchf * 0.05 + audjpy * 0.10 + audcad * 0.06 + audnzd * 0.04)
+nzd = (-eurnzd * 0.03 + nzdusd * 0.58 - gbpnzd * 0.08 + nzdchf * 0.05 + nzdjpy * 0.08 - audnzd * 0.12 + nzdcad * 0.06)
+chf = (-eurchf * 0.25 - usdchf * 0.40 - gbpchf * 0.15 + chfjpy * 0.08 - audchf * 0.05 - cadchf * 0.04 - nzdchf * 0.03)

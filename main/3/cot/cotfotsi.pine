@@ -1,19 +1,28 @@
-//WOOJIN CHOI, 9/29/2025
+//WOOJIN CHOI, 10/06/2025
 //@version=6
+indicator(title = "COT FOTSI",overlay = false)
+
 bool hideCurrentWeek = true
 bool showCommercials = true
 bool showLarge = true
-color_eur = color(color.blue)
-color_usd = color(#0000ff)
-color_gbp = color(color.purple)
-color_chf = color(color.fuchsia)
-color_jpy = color(color.orange)
-color_aud = color(color.lime)
-color_cad = color(color.red)
-color_nzd = color(color.green)
 
-indicator("COT FX", shorttitle="FXCOT")
+color_usd = color(#0717ff)
+color_eur = color(#4dd0e1)
+color_gbp = color(#9C27B0)
+color_jpy = color(#FF9800)
+color_cad = color(#ff0000)
+color_aud = color(#04dd74)
+color_nzd = color(#22ab94)
+color_chf = color(#E040FB)
 
+color_usd2 = color.new(#0717ff,1)
+color_eur2 = color.new(#4dd0e1,1)
+color_gbp2 = color.new(#9C27B0,1)
+color_jpy2 = color.new(#FF9800,1)
+color_cad2 = color.new(#ff0000,1)
+color_aud2 = color.new(#04dd74,1)
+color_nzd2 = color.new(#22ab94,1)
+color_chf2 = color.new(#E040FB,1)
 import TradingView/LibraryCOT/2 as cot
 
 var string Root_Symbol = syminfo.root
@@ -22,8 +31,18 @@ isForex = syminfo.type == "forex"
 var string CFTC_Code_base = isForex ? cot.convertRootToCOTCode("Base currency") : cot.convertRootToCOTCode("Auto") 
 var string CFTC_Code_quote =  isForex ? cot.convertRootToCOTCode("Currency")  : cot.convertRootToCOTCode("Auto")
 
-// string legacy_option    = input.string("Noncommercial Positions", options = ["Noncommercial Positions", "Commercial Positions"], title="Legacy")
-// string financial_option = input.string("Leveraged Funds Positions", options = ["Leveraged Funds Positions", "Dealer Positions", "Asset Manager Positions"], title="Financial")
+//string legacy_option    = input.string("Noncommercial Positions", options = ["Noncommercial Positions", "Commercial Positions"], title="Legacy")
+financial_option = input.string("Asset Manager Positions", options = ["Leveraged Funds Positions", "Dealer Positions", "Asset Manager Positions"], title="Financial", group = "Settings")
+
+length1 = input.int(1,  title="Momentum period",  minval=0, group= "Settings")
+length2 = input.int(5, title="Smoothing period", minval=1, group=  "Settings")
+length3 = input.int(15, title="Smoothing period", minval=1, group= "Settings")
+slope_length = input.int(2, "Slope Length", group="Settings")
+
+show_all = input.bool(true, "Show All", group="Display")
+show_table = input.bool(true, "Show Table",  group="Display")
+apply_zero_sum = input.bool(false, "Apply Zero-sum", group = "Display")
+
 
 dataRequest(code, metricName, direction) =>
     tickerId = cot.COTTickerid("Financial", code, false, metricName, direction, "All")
@@ -32,20 +51,20 @@ dataRequest(code, metricName, direction) =>
         runtime.error("Could not find relevant COT data based on the current symbol.")
     value
 
-// Calculates net long positions for commercials
+
 net(code, option) =>
     long = dataRequest(code, option, "Long") 
     short = dataRequest(code, option, "Short")
     long - short
-//
-eur_lev = hideCurrentWeek ? (timenow >= time_close ?  net("099741","Asset Manager Positions") : na) : na
-usd_lev = hideCurrentWeek ? (timenow >= time_close ?  net("098662","Asset Manager Positions") : na) : na
-gbp_lev = hideCurrentWeek ? (timenow >= time_close ?  net("096742","Asset Manager Positions") : na) : na
-chf_lev = hideCurrentWeek ? (timenow >= time_close ?  net("092741","Asset Manager Positions") : na) : na
-jpy_lev = hideCurrentWeek ? (timenow >= time_close ?  net("097741","Asset Manager Positions") : na) : na
-aud_lev = hideCurrentWeek ? (timenow >= time_close ?  net("232741","Asset Manager Positions") : na) : na
-cad_lev = hideCurrentWeek ? (timenow >= time_close ?  net("090741","Asset Manager Positions") : na) : na
-nzd_lev = hideCurrentWeek ? (timenow >= time_close ?  net("112741","Asset Manager Positions") : na) : na
+
+eur_data = hideCurrentWeek ? (timenow >= time_close ?  net("099741",financial_option) : na) : na
+usd_data = hideCurrentWeek ? (timenow >= time_close ?  net("098662",financial_option) : na) : na
+gbp_data = hideCurrentWeek ? (timenow >= time_close ?  net("096742",financial_option) : na) : na
+chf_data = hideCurrentWeek ? (timenow >= time_close ?  net("092741",financial_option) : na) : na
+jpy_data = hideCurrentWeek ? (timenow >= time_close ?  net("097741",financial_option) : na) : na
+aud_data = hideCurrentWeek ? (timenow >= time_close ?  net("232741",financial_option) : na) : na
+cad_data = hideCurrentWeek ? (timenow >= time_close ?  net("090741",financial_option) : na) : na
+nzd_data = hideCurrentWeek ? (timenow >= time_close ?  net("112741",financial_option) : na) : na
 
 eur_oi = hideCurrentWeek ? (timenow >= time_close ?  dataRequest("099741","Open Interest","No direction") : na) : na
 usd_oi = hideCurrentWeek ? (timenow >= time_close ?  dataRequest("098662","Open Interest","No direction") : na) : na
@@ -56,44 +75,65 @@ aud_oi = hideCurrentWeek ? (timenow >= time_close ?  dataRequest("232741","Open 
 cad_oi = hideCurrentWeek ? (timenow >= time_close ?  dataRequest("090741","Open Interest","No direction") : na) : na
 nzd_oi = hideCurrentWeek ? (timenow >= time_close ?  dataRequest("112741","Open Interest","No direction") : na) : na
 
+mom_usd = usd_data/usd_oi - usd_data[length1]/usd_oi[length1]
+mom_eur = eur_data/eur_oi - eur_data[length1]/eur_oi[length1]
+mom_gbp = gbp_data/gbp_oi - gbp_data[length1]/gbp_oi[length1]
+mom_jpy = jpy_data/jpy_oi - jpy_data[length1]/jpy_oi[length1]
+mom_cad = cad_data/cad_oi - cad_data[length1]/cad_oi[length1]
+mom_aud = aud_data/aud_oi - aud_data[length1]/aud_oi[length1]
+mom_nzd = nzd_data/nzd_oi - nzd_data[length1]/nzd_oi[length1]
+mom_chf = chf_data/chf_oi - chf_data[length1]/chf_oi[length1]
 
-zscore_length = input.int(52, "z-score length")
-slope_length = input.int(2, "slope length")
-smoothing = input.bool(true, "smoothing")
-show_all = input.bool(true, "show all")
-show_table = input.bool(true, "show table")
-zscore(src, length) =>
-    mean = ta.sma(src, length)
-    stddev = ta.stdev(src, length)
-    (src - mean) / stddev
+invert_dealer = financial_option == "Dealer Positions"
+mom_eur := invert_dealer ? -mom_eur : mom_eur
+mom_usd := invert_dealer ? -mom_usd : mom_usd
+mom_gbp := invert_dealer ? -mom_gbp : mom_gbp
+mom_chf := invert_dealer ? -mom_chf : mom_chf
+mom_jpy := invert_dealer ? -mom_jpy : mom_jpy
+mom_aud := invert_dealer ? -mom_aud : mom_aud
+mom_cad := invert_dealer ? -mom_cad : mom_cad
+mom_nzd := invert_dealer ? -mom_nzd : mom_nzd
 
-eur_ = zscore(eur_lev/eur_oi,zscore_length)
-usd_ = zscore(usd_lev/usd_oi,zscore_length)
-gbp_ = zscore(gbp_lev/gbp_oi,zscore_length)
-chf_ = zscore(chf_lev/chf_oi,zscore_length)
-jpy_ = zscore(jpy_lev/jpy_oi,zscore_length)
-aud_ = zscore(aud_lev/aud_oi,zscore_length)
-cad_ = zscore(cad_lev/cad_oi,zscore_length)
-nzd_ = zscore(nzd_lev/nzd_oi,zscore_length)
+tsi_calc(momentum, length2, length3) =>
+    smo1 = ta.ema(momentum, length2)
+    smo2 = ta.ema(smo1, length3)
+    sma1 = ta.ema(math.abs(momentum), length2)
+    sma2 = ta.ema(sma1, length3)
+    100 * (smo2 / sma2)
 
-eur_ema = ta.ema(eur_,3)
-usd_ema = ta.ema(usd_,3)
-gbp_ema = ta.ema(gbp_,3)
-chf_ema = ta.ema(chf_,3)
-jpy_ema = ta.ema(jpy_,3)
-aud_ema = ta.ema(aud_,3)
-cad_ema = ta.ema(cad_,3)
-nzd_ema = ta.ema(nzd_,3)
+tsi_usd = tsi_calc(mom_usd, length2, length3)
+tsi_eur = tsi_calc(mom_eur, length2, length3)
+tsi_gbp = tsi_calc(mom_gbp, length2, length3)
+tsi_jpy = tsi_calc(mom_jpy, length2, length3)
+tsi_cad = tsi_calc(mom_cad, length2, length3)
+tsi_aud = tsi_calc(mom_aud, length2, length3)
+tsi_nzd = tsi_calc(mom_nzd, length2, length3)
+tsi_chf = tsi_calc(mom_chf, length2, length3)
 
-eur_val = smoothing ? eur_ema : eur_
-usd_val = smoothing ? usd_ema : usd_
-gbp_val = smoothing ? gbp_ema : gbp_
-chf_val = smoothing ? chf_ema : chf_
-jpy_val = smoothing ? jpy_ema : jpy_
-aud_val = smoothing ? aud_ema : aud_
-cad_val = smoothing ? cad_ema : cad_
-nzd_val = smoothing ? nzd_ema : nzd_
+if apply_zero_sum
+    tsi_vals = array.from(tsi_eur, tsi_usd, tsi_gbp, tsi_chf, tsi_jpy, tsi_aud, tsi_cad, tsi_nzd)
+    tsi_sum = 0.0
+    for i = 0 to array.size(tsi_vals) - 1
+        tsi_sum += array.get(tsi_vals, i)
+    tsi_mean = tsi_sum / array.size(tsi_vals)
+    
+    tsi_usd -= tsi_mean
+    tsi_eur -= tsi_mean
+    tsi_gbp -= tsi_mean
+    tsi_cad -= tsi_mean
+    tsi_jpy -= tsi_mean
+    tsi_aud -= tsi_mean
+    tsi_nzd -= tsi_mean
+    tsi_chf -= tsi_mean
 
+eur_val = tsi_eur
+usd_val = tsi_usd
+gbp_val = tsi_gbp
+chf_val = tsi_chf
+jpy_val = tsi_jpy
+aud_val = tsi_aud
+cad_val = tsi_cad
+nzd_val = tsi_nzd
 symbol = syminfo.ticker
 upperSymbol = str.upper(symbol)
 base_currency = str.substring(symbol, 0, 3)     
@@ -107,23 +147,24 @@ show_chf = str.contains(upperSymbol, "CHF")
 show_aud = str.contains(upperSymbol, "AUD")
 show_cad = str.contains(upperSymbol, "CAD")
 show_nzd = str.contains(upperSymbol, "NZD")
-plot((show_all or show_eur) ? eur_val : na, title="eur", color=color_eur, linewidth=1)
-plot((show_all or show_usd) ? usd_val : na, title="usd", color=color_usd, linewidth=1)
-plot((show_all or show_gbp) ? gbp_val : na, title="gbp", color=color_gbp, linewidth=1)
-plot((show_all or show_chf) ? chf_val : na, title="chf", color=color_chf, linewidth=1)
-plot((show_all or show_jpy) ? jpy_val : na, title="jpy", color=color_jpy, linewidth=1)
-plot((show_all or show_aud) ? aud_val : na, title="aud", color=color_aud, linewidth=1)
-plot((show_all or show_cad) ? cad_val : na, title="cad", color=color_cad, linewidth=1)
-plot((show_all or show_nzd) ? nzd_val : na, title="nzd", color=color_nzd, linewidth=1)
+
+plot((show_all or show_eur) ? eur_val : na, title="eur", color=eur_val > eur_val[1] ? color_eur : color_eur2, linewidth=1)
+plot((show_all or show_usd) ? usd_val : na, title="usd", color=usd_val > usd_val[1] ? color_usd : color_usd2, linewidth=1)
+plot((show_all or show_gbp) ? gbp_val : na, title="gbp", color=gbp_val > gbp_val[1] ? color_gbp : color_gbp2, linewidth=1)
+plot((show_all or show_chf) ? chf_val : na, title="chf", color=chf_val > chf_val[1] ? color_chf : color_chf2, linewidth=1)
+plot((show_all or show_jpy) ? jpy_val : na, title="jpy", color=jpy_val > jpy_val[1] ? color_jpy : color_jpy2, linewidth=1)
+plot((show_all or show_aud) ? aud_val : na, title="aud", color=aud_val > aud_val[1] ? color_aud : color_aud2, linewidth=1)
+plot((show_all or show_cad) ? cad_val : na, title="cad", color=cad_val > cad_val[1] ? color_cad : color_cad2, linewidth=1)
+plot((show_all or show_nzd) ? nzd_val : na, title="nzd", color=nzd_val > nzd_val[1] ? color_nzd : color_nzd2, linewidth=1)
 
 
-hline(0.0,color = color.black)
-u1 = hline(2.0,color = color.black, linestyle = hline.style_dotted)
-l1 = hline(-2.0,color = color.black, linestyle = hline.style_dotted)
-u2 = hline(3.0,color = color.black, linestyle = hline.style_solid)
-l2 = hline(-3.0,color = color.black, linestyle = hline.style_solid)
-fill(u1,u2,color = color.rgb(255, 82, 82, 60))
-fill(l1,l2,color= color.rgb(76, 175, 79, 60))
+zero = hline(0, "zero", color=color.rgb(0, 0, 0), linestyle=hline.style_dotted)
+u1 = hline(50,"upper 1", color=color.rgb(0, 0, 0), linestyle=hline.style_solid)
+l1 = hline(-50,"lower 1", color=color.rgb(0, 0, 0), linestyle=hline.style_solid)
+u2 = hline(25,"upper 2", color=color.rgb(0, 0, 0), linestyle=hline.style_dotted)
+l2 = hline(-25,"lower 2", color=color.rgb(0, 0, 0), linestyle=hline.style_dotted)
+fill(u1,u2, title="top fill", color=color.new(#000000, 93))
+fill(l1, l2, title="bot fill", color=color.new(#000000, 93))
 
 
 slope_eur = (eur_val[1] - eur_val[slope_length+1])

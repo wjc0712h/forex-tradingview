@@ -1,0 +1,235 @@
+//WOOJIN CHOI, 10/06/2025
+//@version=6
+indicator("COT FX", shorttitle="FXCOT")
+
+bool hideCurrentWeek = true
+bool showCommercials = true
+bool showLarge = true
+
+color_usd = color(#0717ff)
+color_eur = color(#4dd0e1)
+color_gbp = color(#9C27B0)
+color_jpy = color(#FF9800)
+color_cad = color(#ff0000)
+color_aud = color(#04dd74)
+color_nzd = color(#22ab94)
+color_chf = color(#E040FB)
+
+color_usd2 = color.new(#0717ff,1)
+color_eur2 = color.new(#4dd0e1,1)
+color_gbp2 = color.new(#9C27B0,1)
+color_jpy2 = color.new(#FF9800,1)
+color_cad2 = color.new(#ff0000,1)
+color_aud2 = color.new(#04dd74,1)
+color_nzd2 = color.new(#22ab94,1)
+color_chf2 = color.new(#E040FB,1)
+import TradingView/LibraryCOT/2 as cot
+
+var string Root_Symbol = syminfo.root
+
+isForex = syminfo.type == "forex"
+var string CFTC_Code_base = isForex ? cot.convertRootToCOTCode("Base currency") : cot.convertRootToCOTCode("Auto") 
+var string CFTC_Code_quote =  isForex ? cot.convertRootToCOTCode("Currency")  : cot.convertRootToCOTCode("Auto")
+
+//string legacy_option    = input.string("Noncommercial Positions", options = ["Noncommercial Positions", "Commercial Positions"], title="Legacy")
+financial_option = input.string("Asset Manager Positions", options = ["Leveraged Funds Positions", "Dealer Positions", "Asset Manager Positions"], title="Financial", group = "Settings")
+zscore_length = input.int(50, "Z-score length", group = "Settings")
+slope_length = input.int(2, "slope length", group = "Settings")
+smooth_length = input.int(3, "Smooth length", group = "Settings")
+smoothing = input.bool(true, "Apply smoothing", group = "Display")
+show_all = input.bool(true, "Show All", group = "Display")
+show_table = input.bool(true, "Show Table", group = "Display")
+
+dataRequest(code, metricName, direction) =>
+    tickerId = cot.COTTickerid("Financial", code, false, metricName, direction, "All")
+    value = request.security(tickerId, "1D", close, ignore_invalid_symbol = true)
+    if barstate.islastconfirmedhistory and na(value)
+        runtime.error("Could not find relevant COT data based on the current symbol.")
+    value
+
+
+net(code, option) =>
+    long = dataRequest(code, option, "Long") 
+    short = dataRequest(code, option, "Short")
+    long - short
+
+eur_data = hideCurrentWeek ? (timenow >= time_close ?  net("099741",financial_option) : na) : na
+usd_data = hideCurrentWeek ? (timenow >= time_close ?  net("098662",financial_option) : na) : na
+gbp_data = hideCurrentWeek ? (timenow >= time_close ?  net("096742",financial_option) : na) : na
+chf_data = hideCurrentWeek ? (timenow >= time_close ?  net("092741",financial_option) : na) : na
+jpy_data = hideCurrentWeek ? (timenow >= time_close ?  net("097741",financial_option) : na) : na
+aud_data = hideCurrentWeek ? (timenow >= time_close ?  net("232741",financial_option) : na) : na
+cad_data = hideCurrentWeek ? (timenow >= time_close ?  net("090741",financial_option) : na) : na
+nzd_data = hideCurrentWeek ? (timenow >= time_close ?  net("112741",financial_option) : na) : na
+
+eur_oi = hideCurrentWeek ? (timenow >= time_close ?  dataRequest("099741","Open Interest","No direction") : na) : na
+usd_oi = hideCurrentWeek ? (timenow >= time_close ?  dataRequest("098662","Open Interest","No direction") : na) : na
+gbp_oi = hideCurrentWeek ? (timenow >= time_close ?  dataRequest("096742","Open Interest","No direction") : na) : na
+chf_oi = hideCurrentWeek ? (timenow >= time_close ?  dataRequest("092741","Open Interest","No direction") : na) : na
+jpy_oi = hideCurrentWeek ? (timenow >= time_close ?  dataRequest("097741","Open Interest","No direction") : na) : na
+aud_oi = hideCurrentWeek ? (timenow >= time_close ?  dataRequest("232741","Open Interest","No direction") : na) : na
+cad_oi = hideCurrentWeek ? (timenow >= time_close ?  dataRequest("090741","Open Interest","No direction") : na) : na
+nzd_oi = hideCurrentWeek ? (timenow >= time_close ?  dataRequest("112741","Open Interest","No direction") : na) : na
+
+zscore(src, length) =>
+    mean = ta.sma(src, length)
+    stddev = ta.stdev(src, length)
+    (src - mean) / stddev
+
+eur_ = zscore(eur_data/eur_oi,zscore_length)
+usd_ = zscore(usd_data/usd_oi,zscore_length)
+gbp_ = zscore(gbp_data/gbp_oi,zscore_length)
+chf_ = zscore(chf_data/chf_oi,zscore_length)
+jpy_ = zscore(jpy_data/jpy_oi,zscore_length)
+aud_ = zscore(aud_data/aud_oi,zscore_length)
+cad_ = zscore(cad_data/cad_oi,zscore_length)
+nzd_ = zscore(nzd_data/nzd_oi,zscore_length)
+
+eur_ema = ta.ema(eur_,smooth_length)
+usd_ema = ta.ema(usd_,smooth_length)
+gbp_ema = ta.ema(gbp_,smooth_length)
+chf_ema = ta.ema(chf_,smooth_length)
+jpy_ema = ta.ema(jpy_,smooth_length)
+aud_ema = ta.ema(aud_,smooth_length)
+cad_ema = ta.ema(cad_,smooth_length)
+nzd_ema = ta.ema(nzd_,smooth_length)
+
+eur_val = smoothing ? eur_ema : eur_
+usd_val = smoothing ? usd_ema : usd_
+gbp_val = smoothing ? gbp_ema : gbp_
+chf_val = smoothing ? chf_ema : chf_
+jpy_val = smoothing ? jpy_ema : jpy_
+aud_val = smoothing ? aud_ema : aud_
+cad_val = smoothing ? cad_ema : cad_
+nzd_val = smoothing ? nzd_ema : nzd_
+
+invert_dealer = financial_option == "Dealer Positions"
+eur_val := invert_dealer ? -eur_val : eur_val
+usd_val := invert_dealer ? -usd_val : usd_val
+gbp_val := invert_dealer ? -gbp_val : gbp_val
+chf_val := invert_dealer ? -chf_val : chf_val
+jpy_val := invert_dealer ? -jpy_val : jpy_val
+aud_val := invert_dealer ? -aud_val : aud_val
+cad_val := invert_dealer ? -cad_val : cad_val
+nzd_val := invert_dealer ? -nzd_val : nzd_val
+
+symbol = syminfo.ticker
+upperSymbol = str.upper(symbol)
+base_currency = str.substring(symbol, 0, 3)     
+quote_currency = str.substring(symbol, 3, 6)
+
+show_eur = str.contains(upperSymbol, "EUR")
+show_usd = str.contains(upperSymbol, "USD")
+show_gbp = str.contains(upperSymbol, "GBP")
+show_jpy = str.contains(upperSymbol, "JPY")
+show_chf = str.contains(upperSymbol, "CHF")
+show_aud = str.contains(upperSymbol, "AUD")
+show_cad = str.contains(upperSymbol, "CAD")
+show_nzd = str.contains(upperSymbol, "NZD")
+
+plot((show_all or show_eur) ? eur_val : na, title="eur", color=eur_val > eur_val[1] ? color_eur : color_eur2, linewidth=1)
+plot((show_all or show_usd) ? usd_val : na, title="usd", color=usd_val > usd_val[1] ? color_usd : color_usd2, linewidth=1)
+plot((show_all or show_gbp) ? gbp_val : na, title="gbp", color=gbp_val > gbp_val[1] ? color_gbp : color_gbp2, linewidth=1)
+plot((show_all or show_chf) ? chf_val : na, title="chf", color=chf_val > chf_val[1] ? color_chf : color_chf2, linewidth=1)
+plot((show_all or show_jpy) ? jpy_val : na, title="jpy", color=jpy_val > jpy_val[1] ? color_jpy : color_jpy2, linewidth=1)
+plot((show_all or show_aud) ? aud_val : na, title="aud", color=aud_val > aud_val[1] ? color_aud : color_aud2, linewidth=1)
+plot((show_all or show_cad) ? cad_val : na, title="cad", color=cad_val > cad_val[1] ? color_cad : color_cad2, linewidth=1)
+plot((show_all or show_nzd) ? nzd_val : na, title="nzd", color=nzd_val > nzd_val[1] ? color_nzd : color_nzd2, linewidth=1)
+
+
+hline(0.0,color = color.black)
+u1 = hline(2.0,color = color.black, linestyle = hline.style_dotted)
+l1 = hline(-2.0,color = color.black, linestyle = hline.style_dotted)
+u2 = hline(3.0,color = color.black, linestyle = hline.style_solid)
+l2 = hline(-3.0,color = color.black, linestyle = hline.style_solid)
+fill(u1,u2,color = color.rgb(255, 82, 82, 85))
+fill(l1,l2,color= color.rgb(76, 175, 79, 85))
+
+
+slope_eur = (eur_val[1] - eur_val[slope_length+1])
+slope_usd = (usd_val[1] - usd_val[slope_length+1])
+slope_gbp = (gbp_val[1] - gbp_val[slope_length+1])
+slope_chf = (chf_val[1] - chf_val[slope_length+1])
+slope_jpy = (jpy_val[1] - jpy_val[slope_length+1])
+slope_aud = (aud_val[1] - aud_val[slope_length+1])
+slope_cad = (cad_val[1] - cad_val[slope_length+1])
+slope_nzd = (nzd_val[1] - nzd_val[slope_length+1])
+
+if show_table and barstate.islast
+    var table ranking_table = table.new(position.middle_right, 3, 8, bgcolor=color.white, border_width=1, border_color=color.black)
+
+    currencies = array.new<float>()
+    currency_names = array.new<string>()
+    currency_colors = array.new<color>()
+    slope_values = array.new<float>()
+
+    array.push(currencies, eur_val[1])
+    array.push(currency_names, "EUR")
+    array.push(slope_values, slope_eur)
+    array.push(currency_colors, color_eur)
+    
+    array.push(currencies, usd_val[1])
+    array.push(currency_names, "USD")
+    array.push(slope_values, slope_usd)    
+    array.push(currency_colors, color_usd)
+    
+    array.push(currencies, gbp_val[1])
+    array.push(currency_names, "GBP")
+    array.push(slope_values, slope_gbp)
+    array.push(currency_colors, color_gbp)
+    
+    array.push(currencies, jpy_val[1])
+    array.push(currency_names, "JPY")
+    array.push(slope_values, slope_jpy)
+    array.push(currency_colors, color_jpy)
+    
+    array.push(currencies, chf_val[1])
+    array.push(currency_names, "CHF")
+    array.push(slope_values, slope_chf)
+    array.push(currency_colors, color_chf)
+    
+    array.push(currencies, aud_val[1])
+    array.push(currency_names, "AUD")
+    array.push(slope_values, slope_aud)
+    array.push(currency_colors, color_aud)
+    
+    array.push(currencies, cad_val[1])
+    array.push(currency_names, "CAD")
+    array.push(slope_values, slope_cad)
+    array.push(currency_colors, color_cad)
+    
+    array.push(currencies, nzd_val[1])
+    array.push(currency_names, "NZD")
+    array.push(slope_values, slope_nzd)
+    array.push(currency_colors, color_nzd)
+    
+    for i = 0 to array.size(slope_values) - 2
+        for j = i + 1 to array.size(slope_values) - 1
+            if array.get(slope_values, i) < array.get(slope_values, j)
+                temp_rsi = array.get(currencies, i)
+                temp_name = array.get(currency_names, i)
+                temp_slope = array.get(slope_values,i)
+                temp_color = array.get(currency_colors, i)
+                
+                array.set(currencies, i, array.get(currencies, j))
+                array.set(currency_names, i, array.get(currency_names, j))
+                array.set(slope_values, i, array.get(slope_values, j))
+                array.set(currency_colors, i, array.get(currency_colors, j))
+                
+                array.set(currencies, j, temp_rsi)
+                array.set(currency_names, j, temp_name)
+                array.set(slope_values, j, temp_slope)
+                array.set(currency_colors, j, temp_color)
+
+    for i = 0 to array.size(currencies) - 1
+        name = array.get(currency_names, i)
+        tsi_val = array.get(currencies, i)
+        slope_value = array.get(slope_values, i)
+        curr_color = array.get(currency_colors, i)
+        
+        tsi_col = tsi_val > 0 ? color.green : tsi_val < 0 ? color.red : color.black
+        slope_col = slope_value > 0 ? color.green : slope_value < 0 ? color.red : color.black
+
+        table.cell(ranking_table, 0, i, name, text_color=curr_color, text_size=size.tiny)
+        table.cell(ranking_table, 1, i, str.tostring(tsi_val, "#.##"), text_color=tsi_col, text_size=size.tiny)
+        table.cell(ranking_table, 2, i, str.tostring(slope_value, "#.##"), text_color=slope_col, text_size=size.tiny)

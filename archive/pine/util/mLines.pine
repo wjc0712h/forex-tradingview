@@ -1,0 +1,16 @@
+//@version=6
+//just simple monthly vertical lines
+indicator("Monthly Candle End Lines",shorttitle = "M Lines",overlay=true)
+
+htfTime = request.security(syminfo.tickerid, "M", time)
+
+// 월봉이 바뀌는 순간 감지 (새로운 월봉 시작 = 이전 월봉 종료)
+isNewMonth = ta.change(htfTime) != 0
+
+// 월봉이 끝날 때 수직선 그리기
+if isNewMonth and barstate.isconfirmed
+    line.new(bar_index, low, bar_index, high, 
+             color=color.blue, 
+             width=2, 
+             style=line.style_solid,
+             extend=extend.both)

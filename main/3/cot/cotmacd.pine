@@ -1,0 +1,297 @@
+//WOOJIN CHOI, 10/06/2025
+//@version=6
+indicator("COT MACD", overlay = false)
+
+bool hideCurrentWeek = true
+bool showCommercials = true
+bool showLarge = true
+
+color_usd = color(#0717ff)
+color_eur = color(#4dd0e1)
+color_gbp = color(#9C27B0)
+color_jpy = color(#FF9800)
+color_cad = color(#ff0000)
+color_aud = color(#04dd74)
+color_nzd = color(#22ab94)
+color_chf = color(#E040FB)
+
+color_usd2 = color.new(#0717ff,1)
+color_eur2 = color.new(#4dd0e1,1)
+color_gbp2 = color.new(#9C27B0,1)
+color_jpy2 = color.new(#FF9800,1)
+color_cad2 = color.new(#ff0000,1)
+color_aud2 = color.new(#04dd74,1)
+color_nzd2 = color.new(#22ab94,1)
+color_chf2 = color.new(#E040FB,1)
+import TradingView/LibraryCOT/2 as cot
+
+var string Root_Symbol = syminfo.root
+
+isForex = syminfo.type == "forex"
+var string CFTC_Code_base = isForex ? cot.convertRootToCOTCode("Base currency") : cot.convertRootToCOTCode("Auto") 
+var string CFTC_Code_quote =  isForex ? cot.convertRootToCOTCode("Currency")  : cot.convertRootToCOTCode("Auto")
+
+//string legacy_option    = input.string("Noncommercial Positions", options = ["Noncommercial Positions", "Commercial Positions"], title="Legacy")
+financial_option = input.string("Asset Manager Positions", options = ["Leveraged Funds Positions", "Dealer Positions", "Asset Manager Positions"], title="Financial", group = "Settings")
+
+slow_length = input(title = "Slow Length", defval = 26, group= "Settings")
+fast_length = input(title = "Fast Length", defval = 12, group= "Settings")
+signal_length = input(title = "Signal Length", defval = 9, group= "Settings")
+zscore_length = input(title = "Z-score Length", defval = 50, group= "Settings")
+slope_length = input(title = "Slope Length", defval = 2, group= "Settings")
+
+show_all = input.bool(true, "Show All", group="Display")
+show_table = input.bool(true, "Show Table",  group="Display")
+
+showMACD = input.bool(true,"Show MACD", group = "Display")
+showSig = input.bool(true,"Show Signal", group = "Display")
+showHistogram = input.bool(false, "Show Histogram", group = "Display")
+apply_zero_sum = input.bool(true, "Apply Zero-sum", group = "Display")
+
+dataRequest(code, metricName, direction) =>
+    tickerId = cot.COTTickerid("Financial", code, false, metricName, direction, "All")
+    value = request.security(tickerId, "1D", close, ignore_invalid_symbol = true)
+    if barstate.islastconfirmedhistory and na(value)
+        runtime.error("Could not find relevant COT data based on the current symbol.")
+    value
+
+
+net(code, option) =>
+    long = dataRequest(code, option, "Long") 
+    short = dataRequest(code, option, "Short")
+    long - short
+
+eur_data = hideCurrentWeek ? (timenow >= time_close ?  net("099741",financial_option) : na) : na
+usd_data = hideCurrentWeek ? (timenow >= time_close ?  net("098662",financial_option) : na) : na
+gbp_data = hideCurrentWeek ? (timenow >= time_close ?  net("096742",financial_option) : na) : na
+chf_data = hideCurrentWeek ? (timenow >= time_close ?  net("092741",financial_option) : na) : na
+jpy_data = hideCurrentWeek ? (timenow >= time_close ?  net("097741",financial_option) : na) : na
+aud_data = hideCurrentWeek ? (timenow >= time_close ?  net("232741",financial_option) : na) : na
+cad_data = hideCurrentWeek ? (timenow >= time_close ?  net("090741",financial_option) : na) : na
+nzd_data = hideCurrentWeek ? (timenow >= time_close ?  net("112741",financial_option) : na) : na
+
+eur_oi = hideCurrentWeek ? (timenow >= time_close ?  dataRequest("099741","Open Interest","No direction") : na) : na
+usd_oi = hideCurrentWeek ? (timenow >= time_close ?  dataRequest("098662","Open Interest","No direction") : na) : na
+gbp_oi = hideCurrentWeek ? (timenow >= time_close ?  dataRequest("096742","Open Interest","No direction") : na) : na
+chf_oi = hideCurrentWeek ? (timenow >= time_close ?  dataRequest("092741","Open Interest","No direction") : na) : na
+jpy_oi = hideCurrentWeek ? (timenow >= time_close ?  dataRequest("097741","Open Interest","No direction") : na) : na
+aud_oi = hideCurrentWeek ? (timenow >= time_close ?  dataRequest("232741","Open Interest","No direction") : na) : na
+cad_oi = hideCurrentWeek ? (timenow >= time_close ?  dataRequest("090741","Open Interest","No direction") : na) : na
+nzd_oi = hideCurrentWeek ? (timenow >= time_close ?  dataRequest("112741","Open Interest","No direction") : na) : na
+
+usd = usd_data/usd_oi
+eur = eur_data/eur_oi
+gbp = gbp_data/gbp_oi
+jpy = jpy_data/jpy_oi
+cad = cad_data/cad_oi
+aud = aud_data/aud_oi
+nzd = nzd_data/nzd_oi
+chf = chf_data/chf_oi
+
+invert_dealer = financial_option == "Dealer Positions"
+eur := invert_dealer ? -eur : eur
+usd := invert_dealer ? -usd : usd
+gbp := invert_dealer ? -gbp : gbp
+chf := invert_dealer ? -chf : chf
+jpy := invert_dealer ? -jpy : jpy
+aud := invert_dealer ? -aud : aud
+cad := invert_dealer ? -cad : cad
+nzd := invert_dealer ? -nzd : nzd
+zscore(src, length) =>
+    mean = ta.ema(src, length)
+    stddev = ta.stdev(src, length)
+    (src - mean) / stddev
+
+macd_calc(src, fast, slow, sig) =>
+    fast_ma = ta.ema(src, fast)
+    slow_ma = ta.ema(src, slow)
+    macd = zscore(fast_ma - slow_ma, zscore_length)
+    signal = ta.ema(macd, sig)
+    hist = macd - signal
+    [macd,signal,hist]
+
+[macd_usd,sig_usd,hist_usd] = macd_calc(usd,fast_length,slow_length,signal_length)
+[macd_eur,sig_eur,hist_eur] = macd_calc(eur,fast_length,slow_length,signal_length)
+[macd_gbp,sig_gbp,hist_gbp] = macd_calc(gbp,fast_length,slow_length,signal_length)
+[macd_jpy,sig_jpy,hist_jpy] = macd_calc(jpy,fast_length,slow_length,signal_length)
+[macd_cad,sig_cad,hist_cad] = macd_calc(cad,fast_length,slow_length,signal_length)
+[macd_aud,sig_aud,hist_aud] = macd_calc(aud,fast_length,slow_length,signal_length)
+[macd_nzd,sig_nzd,hist_nzd] = macd_calc(nzd,fast_length,slow_length,signal_length)
+[macd_chf,sig_chf,hist_chf] = macd_calc(chf,fast_length,slow_length,signal_length)
+
+if apply_zero_sum
+    meanMACD = (macd_eur + macd_usd + macd_gbp + macd_chf + macd_jpy + macd_aud + macd_cad + macd_nzd)/8
+    sumSIG = (sig_eur + sig_usd + sig_gbp + sig_chf + sig_jpy + sig_aud + sig_cad + sig_nzd)/8
+    sumHIST = (hist_eur + hist_usd + hist_gbp + hist_chf + hist_jpy + hist_aud + hist_cad + hist_nzd)/8
+    macd_eur := macd_eur - meanMACD
+    macd_usd := macd_usd - meanMACD
+    macd_gbp := macd_gbp - meanMACD
+    macd_chf := macd_chf - meanMACD
+    macd_jpy := macd_jpy - meanMACD
+    macd_aud := macd_aud - meanMACD
+    macd_cad := macd_cad - meanMACD
+    macd_nzd := macd_nzd - meanMACD
+    sig_eur := sig_eur - sumSIG
+    sig_usd := sig_usd - sumSIG
+    sig_gbp := sig_gbp - sumSIG
+    sig_chf := sig_chf - sumSIG
+    sig_jpy := sig_jpy - sumSIG
+    sig_aud := sig_aud - sumSIG
+    sig_cad := sig_cad - sumSIG
+    sig_nzd := sig_nzd - sumSIG
+    hist_eur := hist_eur - sumHIST
+    hist_usd := hist_usd - sumHIST
+    hist_gbp := hist_gbp - sumHIST
+    hist_chf := hist_chf - sumHIST
+    hist_jpy := hist_jpy - sumHIST
+    hist_aud := hist_aud - sumHIST
+    hist_cad := hist_cad - sumHIST
+    hist_nzd := hist_nzd - sumHIST
+
+symbol = syminfo.ticker
+upperSymbol = str.upper(symbol)
+
+showEUR = str.contains(upperSymbol, "EUR")
+showUSD = str.contains(upperSymbol, "USD")
+showGBP = str.contains(upperSymbol, "GBP")
+showJPY = str.contains(upperSymbol, "JPY")
+showCHF = str.contains(upperSymbol, "CHF")
+showAUD = str.contains(upperSymbol, "AUD")
+showCAD = str.contains(upperSymbol, "CAD")
+showNZD = str.contains(upperSymbol, "NZD")
+
+macd_plot_eur = plot((showEUR or show_all) and showMACD ? macd_eur : na, title="EUR macd", color= color_eur, linewidth=2)
+macd_plot_usd = plot((showUSD or show_all) and showMACD ? macd_usd : na, title="USD macd", color= color_usd, linewidth=2)
+macd_plot_gbp = plot((showGBP or show_all) and showMACD ? macd_gbp : na, title="GBP macd", color= color_gbp, linewidth=2)
+macd_plot_chf = plot((showCHF or show_all) and showMACD ? macd_chf : na, title="CHF macd", color= color_chf, linewidth=2)
+macd_plot_jpy = plot((showJPY or show_all) and showMACD ? macd_jpy : na, title="JPY macd", color= color_jpy, linewidth=2)
+macd_plot_aud = plot((showAUD or show_all) and showMACD ? macd_aud : na, title="AUD macd", color= color_aud, linewidth=2)
+macd_plot_cad = plot((showCAD or show_all) and showMACD ? macd_cad : na, title="CAD macd", color= color_cad, linewidth=2)
+macd_plot_nzd = plot((showNZD or show_all) and showMACD ? macd_nzd : na, title="NZD macd", color= color_nzd, linewidth=2)
+
+sig_plot_eur = plot((showEUR or show_all) and showSig ? sig_eur : na, title="EUR sig", color= color.new(color_eur,50), linewidth=1)
+sig_plot_usd = plot((showUSD or show_all) and showSig ? sig_usd : na, title="USD sig", color= color.new(color_usd,50), linewidth=1)
+sig_plot_gbp = plot((showGBP or show_all) and showSig ? sig_gbp : na, title="GBP sig", color= color.new(color_gbp,50), linewidth=1)
+sig_plot_chf = plot((showCHF or show_all) and showSig ? sig_chf : na, title="CHF sig", color= color.new(color_chf,50), linewidth=1)
+sig_plot_jpy = plot((showJPY or show_all) and showSig ? sig_jpy : na, title="JPY sig", color= color.new(color_jpy,50), linewidth=1)
+sig_plot_aud = plot((showAUD or show_all) and showSig ? sig_aud : na, title="AUD sig", color= color.new(color_aud,50), linewidth=1)
+sig_plot_cad = plot((showCAD or show_all) and showSig ? sig_cad : na, title="CAD sig", color= color.new(color_cad,50), linewidth=1)
+sig_plot_nzd = plot((showNZD or show_all) and showSig ? sig_nzd : na, title="NZD sig", color= color.new(color_nzd,50), linewidth=1)
+
+plot((showEUR or show_all) and showHistogram ? hist_eur : na, title="EUR hist", color= color.new(color_eur,40), linewidth=1, style = plot.style_columns)
+plot((showUSD or show_all) and showHistogram ? hist_usd : na, title="USD hist", color= color.new(color_usd,40), linewidth=1, style = plot.style_columns)
+plot((showGBP or show_all) and showHistogram ? hist_gbp : na, title="GBP hist", color= color.new(color_gbp,40), linewidth=1, style = plot.style_columns)
+plot((showCHF or show_all) and showHistogram ? hist_chf : na, title="CHF hist", color= color.new(color_chf,40), linewidth=1, style = plot.style_columns)
+plot((showJPY or show_all) and showHistogram ? hist_jpy : na, title="JPY hist", color= color.new(color_jpy,40), linewidth=1, style = plot.style_columns)
+plot((showAUD or show_all) and showHistogram ? hist_aud : na, title="AUD hist", color= color.new(color_aud,40), linewidth=1, style = plot.style_columns)
+plot((showCAD or show_all) and showHistogram ? hist_cad : na, title="CAD hist", color= color.new(color_cad,40), linewidth=1, style = plot.style_columns)
+plot((showNZD or show_all) and showHistogram ? hist_nzd : na, title="NZD hist", color= color.new(color_nzd,40), linewidth=1, style = plot.style_columns)
+
+fill(macd_plot_eur,sig_plot_eur, title="eur plot", color=color.new(color_eur,90))
+fill(macd_plot_usd,sig_plot_usd, title="usd plot", color=color.new(color_usd,90))
+fill(macd_plot_gbp,sig_plot_gbp, title="gbp plot", color=color.new(color_gbp,90))
+fill(macd_plot_chf,sig_plot_chf, title="chf plot", color=color.new(color_chf,90))
+fill(macd_plot_jpy,sig_plot_jpy, title="jpy plot", color=color.new(color_jpy,90))
+fill(macd_plot_aud,sig_plot_aud, title="aud plot", color=color.new(color_aud,90))
+fill(macd_plot_cad,sig_plot_cad, title="cad plot", color=color.new(color_cad,90))
+fill(macd_plot_nzd,sig_plot_nzd, title="nzd plot", color=color.new(color_nzd,90))
+
+// plot(sig_eur+sig_usd+sig_gbp+sig_chf+sig_jpy+sig_aud+sig_cad+sig_nzd)
+// plot(macd_eur+macd_usd+macd_gbp+macd_chf+macd_jpy+macd_aud+macd_cad+macd_nzd)
+// plot(hist_eur+hist_usd+hist_gbp+hist_chf+hist_jpy+hist_aud+hist_cad+hist_nzd)
+zero = hline(0, "zero", color=color.rgb(0, 0, 0), linestyle=hline.style_dotted)
+u1 = hline(2, "upper 1", color=color.rgb(0, 0, 0), linestyle=hline.style_dotted)
+l1 =hline(-2, "lower 1", color=color.rgb(0, 0, 0), linestyle=hline.style_dotted)
+u2 = hline(3, "upper 2", color=color.rgb(0, 0, 0), linestyle=hline.style_solid)
+l2 = hline(-3, "lower 2", color=color.rgb(0, 0, 0), linestyle=hline.style_solid)
+
+fill(u1,u2, title="top fill", color=color.new(#000000, 93))
+fill(l1, l2, title="bot fill", color=color.new(#000000, 93))
+
+slope_eur = (macd_eur[1]*10 - macd_eur[slope_length+1]*10)
+slope_usd = (macd_usd[1]*10 - macd_usd[slope_length+1]*10)
+slope_gbp = (macd_gbp[1]*10 - macd_gbp[slope_length+1]*10)
+slope_chf = (macd_chf[1]*10 - macd_chf[slope_length+1]*10)
+slope_jpy = (macd_jpy[1]*10 - macd_jpy[slope_length+1]*10)
+slope_aud = (macd_aud[1]*10 - macd_aud[slope_length+1]*10)
+slope_cad = (macd_cad[1]*10 - macd_cad[slope_length+1]*10)
+slope_nzd = (macd_nzd[1]*10 - macd_nzd[slope_length+1]*10)
+//--------------------------------------------------TABLE
+if show_table and barstate.islast
+    var table ranking_table = table.new(position.middle_right, 3, 8, bgcolor=color.white, border_width=1, border_color=color.black)
+
+    currencies = array.new<float>()
+    currency_names = array.new<string>()
+    currency_colors = array.new<color>()
+    slope_values = array.new<float>()
+
+    array.push(currencies, macd_eur[1])
+    array.push(currency_names, "EUR")
+    array.push(slope_values, slope_eur)
+    array.push(currency_colors, color_eur)
+    
+    array.push(currencies, macd_usd[1])
+    array.push(currency_names, "USD")
+    array.push(slope_values, slope_usd)    
+    array.push(currency_colors, color_usd)
+    
+    array.push(currencies, macd_gbp[1])
+    array.push(currency_names, "GBP")
+    array.push(slope_values, slope_gbp)
+    array.push(currency_colors, color_gbp)
+    
+    array.push(currencies, macd_jpy[1])
+    array.push(currency_names, "JPY")
+    array.push(slope_values, slope_jpy)
+    array.push(currency_colors, color_jpy)
+    
+    array.push(currencies, macd_chf[1])
+    array.push(currency_names, "CHF")
+    array.push(slope_values, slope_chf)
+    array.push(currency_colors, color_chf)
+    
+    array.push(currencies, macd_aud[1])
+    array.push(currency_names, "AUD")
+    array.push(slope_values, slope_aud)
+    array.push(currency_colors, color_aud)
+    
+    array.push(currencies, macd_cad[1])
+    array.push(currency_names, "CAD")
+    array.push(slope_values, slope_cad)
+    array.push(currency_colors, color_cad)
+    
+    array.push(currencies, macd_nzd[1])
+    array.push(currency_names, "NZD")
+    array.push(slope_values, slope_nzd)
+    array.push(currency_colors, color_nzd)
+    
+    for i = 0 to array.size(slope_values) - 2
+        for j = i + 1 to array.size(slope_values) - 1
+            if array.get(slope_values, i) < array.get(slope_values, j)
+                temp_macd = array.get(currencies, i)
+                temp_name = array.get(currency_names, i)
+                temp_slope = array.get(slope_values,i)
+                temp_color = array.get(currency_colors, i)
+                
+                array.set(currencies, i, array.get(currencies, j))
+                array.set(currency_names, i, array.get(currency_names, j))
+                array.set(slope_values, i, array.get(slope_values, j))
+                array.set(currency_colors, i, array.get(currency_colors, j))
+                
+                array.set(currencies, j, temp_macd)
+                array.set(currency_names, j, temp_name)
+                array.set(slope_values, j, temp_slope)
+                array.set(currency_colors, j, temp_color)
+
+    for i = 0 to array.size(currencies) - 1
+        name = array.get(currency_names, i)
+        macd_val = array.get(currencies, i)
+        slope_value = array.get(slope_values, i)
+        curr_color = array.get(currency_colors, i)
+        
+        macd_col = macd_val > 0 ? color.green : macd_val < 0 ? color.red : color.black
+        slope_col = slope_value > 0 ? color.green : slope_value < 0 ? color.red : color.black
+
+        table.cell(ranking_table, 0, i, name, text_color=curr_color, text_size=size.tiny)
+        table.cell(ranking_table, 1, i, str.tostring(macd_val, "#.##"), text_color=macd_col, text_size=size.tiny)
+        table.cell(ranking_table, 2, i, str.tostring(slope_value, "#.##"), text_color=slope_col, text_size=size.tiny)
