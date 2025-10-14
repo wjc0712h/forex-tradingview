@@ -1,4 +1,4 @@
-//WOOJIN CHOI, 10/06/2025
+//WOOJIN CHOI, 10/13/2025
 //@version=6
 indicator(title = "COT FOTSI",overlay = false)
 
@@ -31,11 +31,12 @@ isForex = syminfo.type == "forex"
 var string CFTC_Code_base = isForex ? cot.convertRootToCOTCode("Base currency") : cot.convertRootToCOTCode("Auto") 
 var string CFTC_Code_quote =  isForex ? cot.convertRootToCOTCode("Currency")  : cot.convertRootToCOTCode("Auto")
 
-//string legacy_option    = input.string("Noncommercial Positions", options = ["Noncommercial Positions", "Commercial Positions"], title="Legacy")
+option = input.string("Financial", options = ["Financial", "Legacy"], title="Category", group = "Settings")
+legacy_option    = input.string("Noncommercial Positions", options = ["Noncommercial Positions", "Commercial Positions"], title="Legacy", group = "Settings")
 financial_option = input.string("Asset Manager Positions", options = ["Leveraged Funds Positions", "Dealer Positions", "Asset Manager Positions"], title="Financial", group = "Settings")
 
 length1 = input.int(1,  title="Momentum period",  minval=0, group= "Settings")
-length2 = input.int(5, title="Smoothing period", minval=1, group=  "Settings")
+length2 = input.int(25, title="Smoothing period", minval=1, group=  "Settings")
 length3 = input.int(15, title="Smoothing period", minval=1, group= "Settings")
 slope_length = input.int(2, "Slope Length", group="Settings")
 
@@ -45,7 +46,7 @@ apply_zero_sum = input.bool(false, "Apply Zero-sum", group = "Display")
 
 
 dataRequest(code, metricName, direction) =>
-    tickerId = cot.COTTickerid("Financial", code, false, metricName, direction, "All")
+    tickerId = cot.COTTickerid(option, code, false, metricName, direction, "All")
     value = request.security(tickerId, "1D", close, ignore_invalid_symbol = true)
     if barstate.islastconfirmedhistory and na(value)
         runtime.error("Could not find relevant COT data based on the current symbol.")
@@ -57,14 +58,15 @@ net(code, option) =>
     short = dataRequest(code, option, "Short")
     long - short
 
-eur_data = hideCurrentWeek ? (timenow >= time_close ?  net("099741",financial_option) : na) : na
-usd_data = hideCurrentWeek ? (timenow >= time_close ?  net("098662",financial_option) : na) : na
-gbp_data = hideCurrentWeek ? (timenow >= time_close ?  net("096742",financial_option) : na) : na
-chf_data = hideCurrentWeek ? (timenow >= time_close ?  net("092741",financial_option) : na) : na
-jpy_data = hideCurrentWeek ? (timenow >= time_close ?  net("097741",financial_option) : na) : na
-aud_data = hideCurrentWeek ? (timenow >= time_close ?  net("232741",financial_option) : na) : na
-cad_data = hideCurrentWeek ? (timenow >= time_close ?  net("090741",financial_option) : na) : na
-nzd_data = hideCurrentWeek ? (timenow >= time_close ?  net("112741",financial_option) : na) : na
+category = option == "Financial" ? financial_option : legacy_option
+eur_data = hideCurrentWeek ? (timenow >= time_close ?  net("099741",category) : na) : na
+usd_data = hideCurrentWeek ? (timenow >= time_close ?  net("098662",category) : na) : na
+gbp_data = hideCurrentWeek ? (timenow >= time_close ?  net("096742",category) : na) : na
+chf_data = hideCurrentWeek ? (timenow >= time_close ?  net("092741",category) : na) : na
+jpy_data = hideCurrentWeek ? (timenow >= time_close ?  net("097741",category) : na) : na
+aud_data = hideCurrentWeek ? (timenow >= time_close ?  net("232741",category) : na) : na
+cad_data = hideCurrentWeek ? (timenow >= time_close ?  net("090741",category) : na) : na
+nzd_data = hideCurrentWeek ? (timenow >= time_close ?  net("112741",category) : na) : na
 
 eur_oi = hideCurrentWeek ? (timenow >= time_close ?  dataRequest("099741","Open Interest","No direction") : na) : na
 usd_oi = hideCurrentWeek ? (timenow >= time_close ?  dataRequest("098662","Open Interest","No direction") : na) : na
@@ -84,7 +86,7 @@ mom_aud = aud_data/aud_oi - aud_data[length1]/aud_oi[length1]
 mom_nzd = nzd_data/nzd_oi - nzd_data[length1]/nzd_oi[length1]
 mom_chf = chf_data/chf_oi - chf_data[length1]/chf_oi[length1]
 
-invert_dealer = financial_option == "Dealer Positions"
+invert_dealer = category == "Dealer Positions" or category == "Commercial Positions"
 mom_eur := invert_dealer ? -mom_eur : mom_eur
 mom_usd := invert_dealer ? -mom_usd : mom_usd
 mom_gbp := invert_dealer ? -mom_gbp : mom_gbp

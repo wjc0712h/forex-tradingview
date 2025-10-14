@@ -1,0 +1,64 @@
+spread_chart(pair) =>
+    spread = 0.0
+    switch pair
+        "AUDUSD" => spread := 1.1
+        "EURUSD" => spread := 1.5
+        "GBPUSD" => spread := 1.7
+        "NZDUSD" => spread := 2.3
+        "USDCAD" => spread := 1.6
+        "USDCHF" => spread := 1.7
+        "USDJPY" => spread := 1.5
+        "AUDCAD" => spread := 2.3
+        "AUDCHF" => spread := 1.8
+        "AUDJPY" => spread := 2.2
+        "AUDNZD" => spread := 2.8
+        "CADCHF" => spread := 2.2 
+        "CADJPY" => spread := 3.3
+        "EURAUD" => spread := 3.7
+        "EURCAD" => spread := 3.3
+        "EURCHF" => spread := 2.2
+        "EURGBP" => spread := 1.5
+        "EURJPY" => spread := 2.5
+        "EURNZD" => spread := 5.8
+        "GBPAUD" => spread := 4.7
+        "GBPCAD" => spread := 4.2
+        "GBPCHF" => spread := 3.7
+        "GBPJPY" => spread := 3.5
+        "GBPNZD" => spread := 8.6
+        "NZDCAD" => spread := 4.2
+        "NZDCHF" => spread := 3.3
+        "NZDJPY" => spread := 2.2
+        "CHFJPY" => spread := 3.3
+    spread
+pip_chart(pair) =>
+    profit = 0.0
+    switch pair
+        "AUDUSD" => profit := 10
+        "EURUSD" => profit := 10
+        "GBPUSD" => profit := 10
+        "NZDUSD" => profit := 10
+        "USDCAD" => profit := 10
+        "USDCHF" => profit := 12.32
+        "USDJPY" => profit := 6.69465
+        "AUDCAD" => profit := 7.32
+        "AUDCHF" => profit := 12.56
+        "AUDJPY" => profit := 6.84
+        "AUDNZD" => profit := 6.04
+        "CADCHF" => profit := 12.56
+        "CADJPY" => profit := 6.84
+        "EURAUD" => profit := 6.59
+        "EURCAD" => profit := 7.32
+        "EURCHF" => profit := 12.56
+        "EURGBP" => profit := 13.58
+        "EURJPY" => profit := 6.84
+        "EURNZD" => profit := 6.04
+        "GBPAUD" => profit := 6.5544
+        "GBPCAD" => profit := 7.17849
+        "GBPCHF" => profit := 12.56
+        "GBPJPY" => profit := 6.84
+        "GBPNZD" => profit := 6.04
+        "NZDCAD" => profit := 7.32
+        "NZDCHF" => profit := 12.56
+        "NZDJPY" => profit := 6.84
+        "CHFJPY" => profit := 6.84
+    profit

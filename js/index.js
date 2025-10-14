@@ -50,7 +50,13 @@ const html = `<!DOCTYPE html>
   <meta charset="UTF-8">
   <title>Forward Rates</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/hammer.js/2.0.8/hammer.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-zoom/2.0.1/chartjs-plugin-zoom.min.js"></script>
   <style>
+    body {
+      margin: 20px;
+      font-family: Arial, sans-serif;
+    }
     .container {
       display: flex;
       gap: 30px;
@@ -59,10 +65,22 @@ const html = `<!DOCTYPE html>
     }
     table {
       flex-shrink: 0;
+      font-size: 10px;
+      width: 200px;
+    }
+    table th, table td {
+      padding: 6px 10px;
+      text-align: left;
+    }
+    table th {
+      background-color: #f5f5f5;
+      font-weight: bold;
     }
     .chart-wrapper {
       flex: 1;
-      min-width: 400px;
+      min-width: 600px;
+      max-width: 900px;
+      height: 450px;
       position: relative;
     }
     .date-info {
@@ -71,12 +89,18 @@ const html = `<!DOCTYPE html>
       margin-bottom: 20px;
       border-radius: 5px;
     }
-    .invert-btn {
+    .invert-btn, .reset-btn, .scale-btn {
       padding: 5px 10px;
       font-size: 13px;
       margin: 2px 2px;
       cursor: pointer;
-      
+    }
+
+    .chart-controls {
+      display: inline-block;
+      margin-left: 10px;
+      font-size: 12px;
+      color: #666;
     }
   </style>
 </head>
@@ -84,7 +108,8 @@ const html = `<!DOCTYPE html>
   <h1>Currency Forward Rates</h1>
   <div class="date-info">
     <strong>Latest Data:</strong> ${latestDate}<br>
-    <strong>Chart Period:</strong> ${recentDates.join(', ')}
+    <strong>Chart Period:</strong> ${recentDates.join(', ')}<br>
+    <strong>Chart Controls:</strong> Scroll to zoom, Drag to pan
   </div>
   ${Object.entries(latestData)
     .map(([pair, rows], index) => {
@@ -134,18 +159,23 @@ const html = `<!DOCTYPE html>
       });
       
       return `
-            <!-- HTML -->
 <h2 id="title${index}" style="display: inline-block; margin-right: 15px;">
   ${pair.toUpperCase()}
 </h2>
 <button class="invert-btn" onclick="invertChart${index}()" style="vertical-align: middle;">
   Invert
 </button>
+<button class="reset-btn" onclick="resetZoom${index}()" style="vertical-align: middle;">
+  Reset Zoom
+</button>
+<button class="scale-btn" id="scaleBtn${index}" onclick="toggleScale${index}()" style="vertical-align: middle;">
+  Scale
+</button>
       <div class="container">
         <table border="1" cellspacing="0" cellpadding="5">
           <thead>
             <tr>
-              <th>Expiration (Days)</th>
+              <th>Expiration</th>
               <th>Points</th>
             </tr>
           </thead>
@@ -164,6 +194,7 @@ const html = `<!DOCTYPE html>
       </div>
       <script>
        let isInverted${index} = false;
+       let isLogScale${index} = false;
        const originalPair${index} = '${pair}';
        
        const chart${index} = new Chart(document.getElementById('chart${index}'), {
@@ -173,6 +204,8 @@ const html = `<!DOCTYPE html>
             },
             options: {
                 responsive: true,
+                maintainAspectRatio: true,
+                aspectRatio: 2,
                 plugins: {
                   legend: {
                     display: true,
@@ -181,12 +214,37 @@ const html = `<!DOCTYPE html>
                   title: {
                     display: true,
                     text: 'Forward Points'
+                  },
+                  zoom: {
+                    pan: {
+                      enabled: true,
+                      mode: 'x'
+                    },
+                    zoom: {
+                      wheel: {
+                        enabled: true
+                      },
+                      pinch: {
+                        enabled: true
+                      },
+                      mode: 'x'
+                    }
                   }
                 },
                 scales: {
                   x: {
                     type: 'linear',
-                    title: { display: true, text: 'Days' }
+                    min: 0,
+                    max: 2000,
+                    title: { 
+                      display: true, 
+                      text: 'Days (Linear Scale)'
+                    },
+                    ticks: {
+                      callback: function(value) {
+                        return Number(value.toFixed(0));
+                      }
+                    }
                   },
                   y: {
                     title: { display: true, text: 'Points' }
@@ -206,7 +264,6 @@ const html = `<!DOCTYPE html>
          });
          chart${index}.update();
          
-         // 제목 변경
          const titleElement = document.getElementById('title${index}');
          if (isInverted${index}) {
            const inverted = originalPair${index}.slice(3) + originalPair${index}.slice(0, 3);
@@ -214,6 +271,33 @@ const html = `<!DOCTYPE html>
          } else {
            titleElement.textContent = originalPair${index}.toUpperCase();
          }
+       }
+       
+       function resetZoom${index}() {
+         chart${index}.resetZoom();
+       }
+       
+       function toggleScale${index}() {
+         isLogScale${index} = !isLogScale${index};
+         const btn = document.getElementById('scaleBtn${index}');
+         
+         if (isLogScale${index}) {
+           chart${index}.options.scales.x.type = 'logarithmic';
+           chart${index}.options.scales.x.min = 1;
+           chart${index}.options.scales.x.max = 2000;
+           chart${index}.options.scales.x.title.text = 'Days (Log Scale)';
+           btn.textContent = 'Log Scale';
+           btn.classList.remove('active');
+         } else {
+           chart${index}.options.scales.x.type = 'linear';
+           chart${index}.options.scales.x.min = 0;
+           chart${index}.options.scales.x.max = 2000;
+           chart${index}.options.scales.x.title.text = 'Days (Linear Scale)';
+           btn.textContent = 'Linear Scale';
+           btn.classList.add('active');
+         }
+         
+         chart${index}.update();
        }
       </script>
       `;

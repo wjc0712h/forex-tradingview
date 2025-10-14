@@ -908,671 +908,1579 @@
     ]
   },
   "2025-10-06": {
-  "eurusd": [
-    {
-      "expiration": "Overnight",
-      "points": "0.73000"
-    },
-    {
-      "expiration": "Tomorrow Next",
-      "points": "2.15000"
-    },
-    {
-      "expiration": "Spot Next",
-      "points": "0.72050"
-    },
-    {
-      "expiration": "One Week",
-      "points": "5.75500"
-    },
-    {
-      "expiration": "Two Week",
-      "points": "10.0630"
-    },
-    {
-      "expiration": "Three Week",
-      "points": "15.0900"
-    },
-    {
-      "expiration": "One Month",
-      "points": "21.8350"
-    },
-    {
-      "expiration": "Two Month",
-      "points": "42.4235"
-    },
-    {
-      "expiration": "Three Month",
-      "points": "61.0845"
-    },
-    {
-      "expiration": "Four Month",
-      "points": "78.8060"
-    },
-    {
-      "expiration": "Five Month",
-      "points": "94.0425"
-    },
-    {
-      "expiration": "Six Month",
-      "points": "111.353"
-    },
-    {
-      "expiration": "Seven Month",
-      "points": "126.717"
-    },
-    {
-      "expiration": "Eight Month",
-      "points": "143.416"
-    },
-    {
-      "expiration": "Nine Month",
-      "points": "157.069"
-    },
-    {
-      "expiration": "Ten Month",
-      "points": "171.601"
-    },
-    {
-      "expiration": "Eleven Month",
-      "points": "186.320"
-    },
-    {
-      "expiration": "One Year",
-      "points": "198.449"
-    },
-    {
-      "expiration": "Two Year",
-      "points": "337.060"
-    },
-    {
-      "expiration": "Three Year",
-      "points": "465.500"
-    },
-    {
-      "expiration": "Four Year",
-      "points": "592.000"
-    },
-    {
-      "expiration": "Five Year",
-      "points": "718.000"
-    },
-    {
-      "expiration": "Six Year",
-      "points": "853.000"
-    },
-    {
-      "expiration": "Seven Year",
-      "points": "997.000"
-    },
-    {
-      "expiration": "Ten Year",
-      "points": "1,444.00"
-    }
-  ],
-  "gbpusd": [
-    {
-      "expiration": "Overnight",
-      "points": "0.07500"
-    },
-    {
-      "expiration": "Tomorrow Next",
-      "points": "0.22500"
-    },
-    {
-      "expiration": "Spot Next",
-      "points": "0.07550"
-    },
-    {
-      "expiration": "One Week",
-      "points": "0.65000"
-    },
-    {
-      "expiration": "Two Week",
-      "points": "1.15300"
-    },
-    {
-      "expiration": "Three Week",
-      "points": "1.75650"
-    },
-    {
-      "expiration": "One Month",
-      "points": "1.91200"
-    },
-    {
-      "expiration": "Two Month",
-      "points": "1.63300"
-    },
-    {
-      "expiration": "Three Month",
-      "points": "-0.40150"
-    },
-    {
-      "expiration": "Four Month",
-      "points": "-3.13650"
-    },
-    {
-      "expiration": "Five Month",
-      "points": "-5.45000"
-    },
-    {
-      "expiration": "Six Month",
-      "points": "-8.71600"
-    },
-    {
-      "expiration": "Seven Month",
-      "points": "-11.8435"
-    },
-    {
-      "expiration": "Eight Month",
-      "points": "-15.5785"
-    },
-    {
-      "expiration": "Nine Month",
-      "points": "-19.3955"
-    },
-    {
-      "expiration": "Ten Month",
-      "points": "-24.0915"
-    },
-    {
-      "expiration": "Eleven Month",
-      "points": "-29.5005"
-    },
-    {
-      "expiration": "One Year",
-      "points": "-34.4685"
-    },
-    {
-      "expiration": "Two Year",
-      "points": "-108.669"
-    },
-    {
-      "expiration": "Three Year",
-      "points": "-178.000"
-    },
-    {
-      "expiration": "Four Year",
-      "points": "-230.000"
-    },
-    {
-      "expiration": "Five Year",
-      "points": "-296.000"
-    }
-  ],
-  "audusd": [
-    {
-      "expiration": "Overnight",
-      "points": "0.10500"
-    },
-    {
-      "expiration": "Tomorrow Next",
-      "points": "0.40000"
-    },
-    {
-      "expiration": "Spot Next",
-      "points": "0.09800"
-    },
-    {
-      "expiration": "One Week",
-      "points": "0.68900"
-    },
-    {
-      "expiration": "Two Week",
-      "points": "1.38550"
-    },
-    {
-      "expiration": "Three Week",
-      "points": "2.08200"
-    },
-    {
-      "expiration": "One Month",
-      "points": "2.76550"
-    },
-    {
-      "expiration": "Two Month",
-      "points": "4.98900"
-    },
-    {
-      "expiration": "Three Month",
-      "points": "6.53700"
-    },
-    {
-      "expiration": "Four Month",
-      "points": "7.56550"
-    },
-    {
-      "expiration": "Five Month",
-      "points": "8.32500"
-    },
-    {
-      "expiration": "Six Month",
-      "points": "8.94650"
-    },
-    {
-      "expiration": "Seven Month",
-      "points": "9.31550"
-    },
-    {
-      "expiration": "Eight Month",
-      "points": "9.40250"
-    },
-    {
-      "expiration": "Nine Month",
-      "points": "9.12000"
-    },
-    {
-      "expiration": "Ten Month",
-      "points": "8.46550"
-    },
-    {
-      "expiration": "Eleven Month",
-      "points": "7.38050"
-    },
-    {
-      "expiration": "One Year",
-      "points": "6.12000"
-    },
-    {
-      "expiration": "Two Year",
-      "points": "-19.0000"
-    },
-    {
-      "expiration": "Three Year",
-      "points": "-55.5000"
-    },
-    {
-      "expiration": "Four Year",
-      "points": "-92.0000"
-    },
-    {
-      "expiration": "Five Year",
-      "points": "-137.000"
-    },
-    {
-      "expiration": "Six Year",
-      "points": "-187.000"
-    },
-    {
-      "expiration": "Seven Year",
-      "points": "-241.000"
-    },
-    {
-      "expiration": "Ten Year",
-      "points": "-406.000"
-    }
-  ],
-  "nzdusd": [
-    {
-      "expiration": "Overnight",
-      "points": "0.20000"
-    },
-    {
-      "expiration": "Tomorrow Next",
-      "points": "0.60000"
-    },
-    {
-      "expiration": "Spot Next",
-      "points": "0.19550"
-    },
-    {
-      "expiration": "One Week",
-      "points": "1.79950"
-    },
-    {
-      "expiration": "Two Week",
-      "points": "3.26850"
-    },
-    {
-      "expiration": "Three Week",
-      "points": "5.23050"
-    },
-    {
-      "expiration": "One Month",
-      "points": "7.16600"
-    },
-    {
-      "expiration": "Two Month",
-      "points": "14.1860"
-    },
-    {
-      "expiration": "Three Month",
-      "points": "20.6905"
-    },
-    {
-      "expiration": "Four Month",
-      "points": "27.6885"
-    },
-    {
-      "expiration": "Five Month",
-      "points": "32.7110"
-    },
-    {
-      "expiration": "Six Month",
-      "points": "39.1090"
-    },
-    {
-      "expiration": "Seven Month",
-      "points": "44.7215"
-    },
-    {
-      "expiration": "Eight Month",
-      "points": "50.6990"
-    },
-    {
-      "expiration": "Nine Month",
-      "points": "55.4595"
-    },
-    {
-      "expiration": "Ten Month",
-      "points": "60.3930"
-    },
-    {
-      "expiration": "Eleven Month",
-      "points": "65.2170"
-    },
-    {
-      "expiration": "One Year",
-      "points": "68.9835"
-    },
-    {
-      "expiration": "Two Year",
-      "points": "94.7650"
-    },
-    {
-      "expiration": "Three Year",
-      "points": "99.0000"
-    },
-    {
-      "expiration": "Four Year",
-      "points": "87.0000"
-    },
-    {
-      "expiration": "Five Year",
-      "points": "67.0000"
-    }
-  ],
-  "usdjpy": [
-    {
-      "expiration": "Overnight",
-      "points": "-1.55000"
-    },
-    {
-      "expiration": "Tomorrow Next",
-      "points": "-4.71000"
-    },
-    {
-      "expiration": "Spot Next",
-      "points": "-1.56850"
-    },
-    {
-      "expiration": "One Week",
-      "points": "-12.4870"
-    },
-    {
-      "expiration": "Two Week",
-      "points": "-21.8220"
-    },
-    {
-      "expiration": "Three Week",
-      "points": "-32.7055"
-    },
-    {
-      "expiration": "One Month",
-      "points": "-47.5975"
-    },
-    {
-      "expiration": "Two Month",
-      "points": "-92.3745"
-    },
-    {
-      "expiration": "Three Month",
-      "points": "-135.240"
-    },
-    {
-      "expiration": "Four Month",
-      "points": "-174.790"
-    },
-    {
-      "expiration": "Five Month",
-      "points": "-209.138"
-    },
-    {
-      "expiration": "Six Month",
-      "points": "-246.864"
-    },
-    {
-      "expiration": "Seven Month",
-      "points": "-282.888"
-    },
-    {
-      "expiration": "Eight Month",
-      "points": "-318.554"
-    },
-    {
-      "expiration": "Nine Month",
-      "points": "-348.987"
-    },
-    {
-      "expiration": "Ten Month",
-      "points": "-381.011"
-    },
-    {
-      "expiration": "Eleven Month",
-      "points": "-413.594"
-    },
-    {
-      "expiration": "One Year",
-      "points": "-441.112"
-    },
-    {
-      "expiration": "Two Year",
-      "points": "-765.141"
-    },
-    {
-      "expiration": "Three Year",
-      "points": "-1,083.00"
-    },
-    {
-      "expiration": "Four Year",
-      "points": "-1,410.00"
-    },
-    {
-      "expiration": "Five Year",
-      "points": "-1,724.00"
-    },
-    {
-      "expiration": "Six Year",
-      "points": "-2,045.00"
-    },
-    {
-      "expiration": "Seven Year",
-      "points": "-2,367.00"
-    },
-    {
-      "expiration": "Ten Year",
-      "points": "-3,225.00"
-    }
-  ],
-  "usdchf": [
-    {
-      "expiration": "Overnight",
-      "points": "-0.99500"
-    },
-    {
-      "expiration": "Tomorrow Next",
-      "points": "-0.97500"
-    },
-    {
-      "expiration": "Spot Next",
-      "points": "-0.96500"
-    },
-    {
-      "expiration": "One Week",
-      "points": "-7.73350"
-    },
-    {
-      "expiration": "Two Week",
-      "points": "-13.5090"
-    },
-    {
-      "expiration": "Three Week",
-      "points": "-20.2705"
-    },
-    {
-      "expiration": "One Month",
-      "points": "-29.6125"
-    },
-    {
-      "expiration": "Two Month",
-      "points": "-58.3845"
-    },
-    {
-      "expiration": "Three Month",
-      "points": "-84.4260"
-    },
-    {
-      "expiration": "Four Month",
-      "points": "-110.357"
-    },
-    {
-      "expiration": "Five Month",
-      "points": "-133.189"
-    },
-    {
-      "expiration": "Six Month",
-      "points": "-159.121"
-    },
-    {
-      "expiration": "Seven Month",
-      "points": "-182.170"
-    },
-    {
-      "expiration": "Eight Month",
-      "points": "-207.695"
-    },
-    {
-      "expiration": "Nine Month",
-      "points": "-228.928"
-    },
-    {
-      "expiration": "Ten Month",
-      "points": "-251.856"
-    },
-    {
-      "expiration": "Eleven Month",
-      "points": "-275.669"
-    },
-    {
-      "expiration": "One Year",
-      "points": "-295.621"
-    },
-    {
-      "expiration": "Two Year",
-      "points": "-541.222"
-    },
-    {
-      "expiration": "Three Year",
-      "points": "-774.000"
-    },
-    {
-      "expiration": "Four Year",
-      "points": "-997.000"
-    },
-    {
-      "expiration": "Five Year",
-      "points": "-1,211.00"
-    }
-  ],
-  "usdcad": [
-    {
-      "expiration": "Overnight",
-      "points": "-0.67500"
-    },
-    {
-      "expiration": "Tomorrow Next",
-      "points": "-0.68500"
-    },
-    {
-      "expiration": "Spot Next",
-      "points": "-2.01000"
-    },
-    {
-      "expiration": "One Week",
-      "points": "-4.70950"
-    },
-    {
-      "expiration": "Two Week",
-      "points": "-9.37350"
-    },
-    {
-      "expiration": "Three Week",
-      "points": "-14.0620"
-    },
-    {
-      "expiration": "One Month",
-      "points": "-20.6945"
-    },
-    {
-      "expiration": "Two Month",
-      "points": "-39.3600"
-    },
-    {
-      "expiration": "Three Month",
-      "points": "-60.4195"
-    },
-    {
-      "expiration": "Four Month",
-      "points": "-76.9035"
-    },
-    {
-      "expiration": "Five Month",
-      "points": "-91.9725"
-    },
-    {
-      "expiration": "Six Month",
-      "points": "-109.883"
-    },
-    {
-      "expiration": "Seven Month",
-      "points": "-124.115"
-    },
-    {
-      "expiration": "Eight Month",
-      "points": "-138.579"
-    },
-    {
-      "expiration": "Nine Month",
-      "points": "-152.553"
-    },
-    {
-      "expiration": "Ten Month",
-      "points": "-166.308"
-    },
-    {
-      "expiration": "Eleven Month",
-      "points": "-178.171"
-    },
-    {
-      "expiration": "One Year",
-      "points": "-190.217"
-    },
-    {
-      "expiration": "Two Year",
-      "points": "-299.101"
-    },
-    {
-      "expiration": "Three Year",
-      "points": "-400.000"
-    },
-    {
-      "expiration": "Four Year",
-      "points": "-492.000"
-    },
-    {
-      "expiration": "Five Year",
-      "points": "-579.000"
-    }
-  ]
+    "eurusd": [
+      {
+        "expiration": "Overnight",
+        "points": "0.73000"
+      },
+      {
+        "expiration": "Tomorrow Next",
+        "points": "2.15000"
+      },
+      {
+        "expiration": "Spot Next",
+        "points": "0.72050"
+      },
+      {
+        "expiration": "One Week",
+        "points": "5.75500"
+      },
+      {
+        "expiration": "Two Week",
+        "points": "10.0630"
+      },
+      {
+        "expiration": "Three Week",
+        "points": "15.0900"
+      },
+      {
+        "expiration": "One Month",
+        "points": "21.8350"
+      },
+      {
+        "expiration": "Two Month",
+        "points": "42.4235"
+      },
+      {
+        "expiration": "Three Month",
+        "points": "61.0845"
+      },
+      {
+        "expiration": "Four Month",
+        "points": "78.8060"
+      },
+      {
+        "expiration": "Five Month",
+        "points": "94.0425"
+      },
+      {
+        "expiration": "Six Month",
+        "points": "111.353"
+      },
+      {
+        "expiration": "Seven Month",
+        "points": "126.717"
+      },
+      {
+        "expiration": "Eight Month",
+        "points": "143.416"
+      },
+      {
+        "expiration": "Nine Month",
+        "points": "157.069"
+      },
+      {
+        "expiration": "Ten Month",
+        "points": "171.601"
+      },
+      {
+        "expiration": "Eleven Month",
+        "points": "186.320"
+      },
+      {
+        "expiration": "One Year",
+        "points": "198.449"
+      },
+      {
+        "expiration": "Two Year",
+        "points": "337.060"
+      },
+      {
+        "expiration": "Three Year",
+        "points": "465.500"
+      },
+      {
+        "expiration": "Four Year",
+        "points": "592.000"
+      },
+      {
+        "expiration": "Five Year",
+        "points": "718.000"
+      },
+      {
+        "expiration": "Six Year",
+        "points": "853.000"
+      },
+      {
+        "expiration": "Seven Year",
+        "points": "997.000"
+      },
+      {
+        "expiration": "Ten Year",
+        "points": "1,444.00"
+      }
+    ],
+    "gbpusd": [
+      {
+        "expiration": "Overnight",
+        "points": "0.07500"
+      },
+      {
+        "expiration": "Tomorrow Next",
+        "points": "0.22500"
+      },
+      {
+        "expiration": "Spot Next",
+        "points": "0.07550"
+      },
+      {
+        "expiration": "One Week",
+        "points": "0.65000"
+      },
+      {
+        "expiration": "Two Week",
+        "points": "1.15300"
+      },
+      {
+        "expiration": "Three Week",
+        "points": "1.75650"
+      },
+      {
+        "expiration": "One Month",
+        "points": "1.91200"
+      },
+      {
+        "expiration": "Two Month",
+        "points": "1.63300"
+      },
+      {
+        "expiration": "Three Month",
+        "points": "-0.40150"
+      },
+      {
+        "expiration": "Four Month",
+        "points": "-3.13650"
+      },
+      {
+        "expiration": "Five Month",
+        "points": "-5.45000"
+      },
+      {
+        "expiration": "Six Month",
+        "points": "-8.71600"
+      },
+      {
+        "expiration": "Seven Month",
+        "points": "-11.8435"
+      },
+      {
+        "expiration": "Eight Month",
+        "points": "-15.5785"
+      },
+      {
+        "expiration": "Nine Month",
+        "points": "-19.3955"
+      },
+      {
+        "expiration": "Ten Month",
+        "points": "-24.0915"
+      },
+      {
+        "expiration": "Eleven Month",
+        "points": "-29.5005"
+      },
+      {
+        "expiration": "One Year",
+        "points": "-34.4685"
+      },
+      {
+        "expiration": "Two Year",
+        "points": "-108.669"
+      },
+      {
+        "expiration": "Three Year",
+        "points": "-178.000"
+      },
+      {
+        "expiration": "Four Year",
+        "points": "-230.000"
+      },
+      {
+        "expiration": "Five Year",
+        "points": "-296.000"
+      }
+    ],
+    "audusd": [
+      {
+        "expiration": "Overnight",
+        "points": "0.10500"
+      },
+      {
+        "expiration": "Tomorrow Next",
+        "points": "0.40000"
+      },
+      {
+        "expiration": "Spot Next",
+        "points": "0.09800"
+      },
+      {
+        "expiration": "One Week",
+        "points": "0.68900"
+      },
+      {
+        "expiration": "Two Week",
+        "points": "1.38550"
+      },
+      {
+        "expiration": "Three Week",
+        "points": "2.08200"
+      },
+      {
+        "expiration": "One Month",
+        "points": "2.76550"
+      },
+      {
+        "expiration": "Two Month",
+        "points": "4.98900"
+      },
+      {
+        "expiration": "Three Month",
+        "points": "6.53700"
+      },
+      {
+        "expiration": "Four Month",
+        "points": "7.56550"
+      },
+      {
+        "expiration": "Five Month",
+        "points": "8.32500"
+      },
+      {
+        "expiration": "Six Month",
+        "points": "8.94650"
+      },
+      {
+        "expiration": "Seven Month",
+        "points": "9.31550"
+      },
+      {
+        "expiration": "Eight Month",
+        "points": "9.40250"
+      },
+      {
+        "expiration": "Nine Month",
+        "points": "9.12000"
+      },
+      {
+        "expiration": "Ten Month",
+        "points": "8.46550"
+      },
+      {
+        "expiration": "Eleven Month",
+        "points": "7.38050"
+      },
+      {
+        "expiration": "One Year",
+        "points": "6.12000"
+      },
+      {
+        "expiration": "Two Year",
+        "points": "-19.0000"
+      },
+      {
+        "expiration": "Three Year",
+        "points": "-55.5000"
+      },
+      {
+        "expiration": "Four Year",
+        "points": "-92.0000"
+      },
+      {
+        "expiration": "Five Year",
+        "points": "-137.000"
+      },
+      {
+        "expiration": "Six Year",
+        "points": "-187.000"
+      },
+      {
+        "expiration": "Seven Year",
+        "points": "-241.000"
+      },
+      {
+        "expiration": "Ten Year",
+        "points": "-406.000"
+      }
+    ],
+    "nzdusd": [
+      {
+        "expiration": "Overnight",
+        "points": "0.20000"
+      },
+      {
+        "expiration": "Tomorrow Next",
+        "points": "0.60000"
+      },
+      {
+        "expiration": "Spot Next",
+        "points": "0.19550"
+      },
+      {
+        "expiration": "One Week",
+        "points": "1.79950"
+      },
+      {
+        "expiration": "Two Week",
+        "points": "3.26850"
+      },
+      {
+        "expiration": "Three Week",
+        "points": "5.23050"
+      },
+      {
+        "expiration": "One Month",
+        "points": "7.16600"
+      },
+      {
+        "expiration": "Two Month",
+        "points": "14.1860"
+      },
+      {
+        "expiration": "Three Month",
+        "points": "20.6905"
+      },
+      {
+        "expiration": "Four Month",
+        "points": "27.6885"
+      },
+      {
+        "expiration": "Five Month",
+        "points": "32.7110"
+      },
+      {
+        "expiration": "Six Month",
+        "points": "39.1090"
+      },
+      {
+        "expiration": "Seven Month",
+        "points": "44.7215"
+      },
+      {
+        "expiration": "Eight Month",
+        "points": "50.6990"
+      },
+      {
+        "expiration": "Nine Month",
+        "points": "55.4595"
+      },
+      {
+        "expiration": "Ten Month",
+        "points": "60.3930"
+      },
+      {
+        "expiration": "Eleven Month",
+        "points": "65.2170"
+      },
+      {
+        "expiration": "One Year",
+        "points": "68.9835"
+      },
+      {
+        "expiration": "Two Year",
+        "points": "94.7650"
+      },
+      {
+        "expiration": "Three Year",
+        "points": "99.0000"
+      },
+      {
+        "expiration": "Four Year",
+        "points": "87.0000"
+      },
+      {
+        "expiration": "Five Year",
+        "points": "67.0000"
+      }
+    ],
+    "usdjpy": [
+      {
+        "expiration": "Overnight",
+        "points": "-1.55000"
+      },
+      {
+        "expiration": "Tomorrow Next",
+        "points": "-4.71000"
+      },
+      {
+        "expiration": "Spot Next",
+        "points": "-1.56850"
+      },
+      {
+        "expiration": "One Week",
+        "points": "-12.4870"
+      },
+      {
+        "expiration": "Two Week",
+        "points": "-21.8220"
+      },
+      {
+        "expiration": "Three Week",
+        "points": "-32.7055"
+      },
+      {
+        "expiration": "One Month",
+        "points": "-47.5975"
+      },
+      {
+        "expiration": "Two Month",
+        "points": "-92.3745"
+      },
+      {
+        "expiration": "Three Month",
+        "points": "-135.240"
+      },
+      {
+        "expiration": "Four Month",
+        "points": "-174.790"
+      },
+      {
+        "expiration": "Five Month",
+        "points": "-209.138"
+      },
+      {
+        "expiration": "Six Month",
+        "points": "-246.864"
+      },
+      {
+        "expiration": "Seven Month",
+        "points": "-282.888"
+      },
+      {
+        "expiration": "Eight Month",
+        "points": "-318.554"
+      },
+      {
+        "expiration": "Nine Month",
+        "points": "-348.987"
+      },
+      {
+        "expiration": "Ten Month",
+        "points": "-381.011"
+      },
+      {
+        "expiration": "Eleven Month",
+        "points": "-413.594"
+      },
+      {
+        "expiration": "One Year",
+        "points": "-441.112"
+      },
+      {
+        "expiration": "Two Year",
+        "points": "-765.141"
+      },
+      {
+        "expiration": "Three Year",
+        "points": "-1,083.00"
+      },
+      {
+        "expiration": "Four Year",
+        "points": "-1,410.00"
+      },
+      {
+        "expiration": "Five Year",
+        "points": "-1,724.00"
+      },
+      {
+        "expiration": "Six Year",
+        "points": "-2,045.00"
+      },
+      {
+        "expiration": "Seven Year",
+        "points": "-2,367.00"
+      },
+      {
+        "expiration": "Ten Year",
+        "points": "-3,225.00"
+      }
+    ],
+    "usdchf": [
+      {
+        "expiration": "Overnight",
+        "points": "-0.99500"
+      },
+      {
+        "expiration": "Tomorrow Next",
+        "points": "-0.97500"
+      },
+      {
+        "expiration": "Spot Next",
+        "points": "-0.96500"
+      },
+      {
+        "expiration": "One Week",
+        "points": "-7.73350"
+      },
+      {
+        "expiration": "Two Week",
+        "points": "-13.5090"
+      },
+      {
+        "expiration": "Three Week",
+        "points": "-20.2705"
+      },
+      {
+        "expiration": "One Month",
+        "points": "-29.6125"
+      },
+      {
+        "expiration": "Two Month",
+        "points": "-58.3845"
+      },
+      {
+        "expiration": "Three Month",
+        "points": "-84.4260"
+      },
+      {
+        "expiration": "Four Month",
+        "points": "-110.357"
+      },
+      {
+        "expiration": "Five Month",
+        "points": "-133.189"
+      },
+      {
+        "expiration": "Six Month",
+        "points": "-159.121"
+      },
+      {
+        "expiration": "Seven Month",
+        "points": "-182.170"
+      },
+      {
+        "expiration": "Eight Month",
+        "points": "-207.695"
+      },
+      {
+        "expiration": "Nine Month",
+        "points": "-228.928"
+      },
+      {
+        "expiration": "Ten Month",
+        "points": "-251.856"
+      },
+      {
+        "expiration": "Eleven Month",
+        "points": "-275.669"
+      },
+      {
+        "expiration": "One Year",
+        "points": "-295.621"
+      },
+      {
+        "expiration": "Two Year",
+        "points": "-541.222"
+      },
+      {
+        "expiration": "Three Year",
+        "points": "-774.000"
+      },
+      {
+        "expiration": "Four Year",
+        "points": "-997.000"
+      },
+      {
+        "expiration": "Five Year",
+        "points": "-1,211.00"
+      }
+    ],
+    "usdcad": [
+      {
+        "expiration": "Overnight",
+        "points": "-0.67500"
+      },
+      {
+        "expiration": "Tomorrow Next",
+        "points": "-0.68500"
+      },
+      {
+        "expiration": "Spot Next",
+        "points": "-2.01000"
+      },
+      {
+        "expiration": "One Week",
+        "points": "-4.70950"
+      },
+      {
+        "expiration": "Two Week",
+        "points": "-9.37350"
+      },
+      {
+        "expiration": "Three Week",
+        "points": "-14.0620"
+      },
+      {
+        "expiration": "One Month",
+        "points": "-20.6945"
+      },
+      {
+        "expiration": "Two Month",
+        "points": "-39.3600"
+      },
+      {
+        "expiration": "Three Month",
+        "points": "-60.4195"
+      },
+      {
+        "expiration": "Four Month",
+        "points": "-76.9035"
+      },
+      {
+        "expiration": "Five Month",
+        "points": "-91.9725"
+      },
+      {
+        "expiration": "Six Month",
+        "points": "-109.883"
+      },
+      {
+        "expiration": "Seven Month",
+        "points": "-124.115"
+      },
+      {
+        "expiration": "Eight Month",
+        "points": "-138.579"
+      },
+      {
+        "expiration": "Nine Month",
+        "points": "-152.553"
+      },
+      {
+        "expiration": "Ten Month",
+        "points": "-166.308"
+      },
+      {
+        "expiration": "Eleven Month",
+        "points": "-178.171"
+      },
+      {
+        "expiration": "One Year",
+        "points": "-190.217"
+      },
+      {
+        "expiration": "Two Year",
+        "points": "-299.101"
+      },
+      {
+        "expiration": "Three Year",
+        "points": "-400.000"
+      },
+      {
+        "expiration": "Four Year",
+        "points": "-492.000"
+      },
+      {
+        "expiration": "Five Year",
+        "points": "-579.000"
+      }
+    ]
+  },
+  "2025-10-09": {
+    "eurusd": [
+      {
+        "expiration": "Overnight",
+        "points": "0.6801"
+      },
+      {
+        "expiration": "Tomorrow Next",
+        "points": "2.7650"
+      },
+      {
+        "expiration": "Spot Next",
+        "points": "2.7700"
+      },
+      {
+        "expiration": "One Week",
+        "points": "4.9200"
+      },
+      {
+        "expiration": "Two Week",
+        "points": "9.8400"
+      },
+      {
+        "expiration": "Three Week",
+        "points": "14.6800"
+      },
+      {
+        "expiration": "One Month",
+        "points": "21.0800"
+      },
+      {
+        "expiration": "Two Month",
+        "points": "40.4200"
+      },
+      {
+        "expiration": "Three Month",
+        "points": "61.1000"
+      },
+      {
+        "expiration": "Four Month",
+        "points": "78.5000"
+      },
+      {
+        "expiration": "Five Month",
+        "points": "93.5400"
+      },
+      {
+        "expiration": "Six Month",
+        "points": "110.3000"
+      },
+      {
+        "expiration": "Seven Month",
+        "points": "126.8700"
+      },
+      {
+        "expiration": "Eight Month",
+        "points": "142.7900"
+      },
+      {
+        "expiration": "Nine Month",
+        "points": "157.9400"
+      },
+      {
+        "expiration": "Ten Month",
+        "points": "172.9300"
+      },
+      {
+        "expiration": "Eleven Month",
+        "points": "187.5400"
+      },
+      {
+        "expiration": "One Year",
+        "points": "202.2400"
+      },
+      {
+        "expiration": "Fifteen Month",
+        "points": "241.4600"
+      },
+      {
+        "expiration": "Twenty One Month",
+        "points": "312.9000"
+      },
+      {
+        "expiration": "Two Year",
+        "points": "347.3100"
+      },
+      {
+        "expiration": "Three Year",
+        "points": "483.8000"
+      },
+      {
+        "expiration": "Four Year",
+        "points": "616.1600"
+      },
+      {
+        "expiration": "Five Year",
+        "points": "756.0000"
+      },
+      {
+        "expiration": "Six Year",
+        "points": "893.0000"
+      },
+      {
+        "expiration": "Seven Year",
+        "points": "1040.0000"
+      },
+      {
+        "expiration": "Eight Year",
+        "points": "1188.0000"
+      },
+      {
+        "expiration": "Nine Year",
+        "points": "1340.0000"
+      },
+      {
+        "expiration": "Ten Year",
+        "points": "1498.0000"
+      },
+      {
+        "expiration": "12Y",
+        "points": "2025.8750"
+      },
+      {
+        "expiration": "Fifteen Year",
+        "points": "2622.2400"
+      },
+      {
+        "expiration": "Twenty Year",
+        "points": "3683.1150"
+      },
+      {
+        "expiration": "30Y",
+        "points": "5133.9502"
+      }
+    ],
+    "gbpusd": [
+      {
+        "expiration": "Overnight",
+        "points": "0.0800"
+      },
+      {
+        "expiration": "Tomorrow Next",
+        "points": "0.2820"
+      },
+      {
+        "expiration": "Spot Next",
+        "points": "0.3090"
+      },
+      {
+        "expiration": "One Week",
+        "points": "0.5200"
+      },
+      {
+        "expiration": "Two Week",
+        "points": "1.0500"
+      },
+      {
+        "expiration": "Three Week",
+        "points": "1.4300"
+      },
+      {
+        "expiration": "One Month",
+        "points": "1.3800"
+      },
+      {
+        "expiration": "Two Month",
+        "points": "1.2900"
+      },
+      {
+        "expiration": "Three Month",
+        "points": "-0.9100"
+      },
+      {
+        "expiration": "Four Month",
+        "points": "-3.3000"
+      },
+      {
+        "expiration": "Five Month",
+        "points": "-5.4400"
+      },
+      {
+        "expiration": "Six Month",
+        "points": "-8.3800"
+      },
+      {
+        "expiration": "Seven Month",
+        "points": "-11.3600"
+      },
+      {
+        "expiration": "Eight Month",
+        "points": "-14.3700"
+      },
+      {
+        "expiration": "Nine Month",
+        "points": "-18.1100"
+      },
+      {
+        "expiration": "Ten Month",
+        "points": "-22.5200"
+      },
+      {
+        "expiration": "Eleven Month",
+        "points": "-27.3600"
+      },
+      {
+        "expiration": "One Year",
+        "points": "-32.9200"
+      },
+      {
+        "expiration": "Fifteen Month",
+        "points": "-48.6600"
+      },
+      {
+        "expiration": "Twenty One Month",
+        "points": "-87.5200"
+      },
+      {
+        "expiration": "Two Year",
+        "points": "-104.8700"
+      },
+      {
+        "expiration": "Three Year",
+        "points": "-180.0000"
+      },
+      {
+        "expiration": "Four Year",
+        "points": "-234.0000"
+      },
+      {
+        "expiration": "Five Year",
+        "points": "-288.6000"
+      },
+      {
+        "expiration": "Six Year",
+        "points": "-354.0000"
+      },
+      {
+        "expiration": "Seven Year",
+        "points": "-409.0000"
+      },
+      {
+        "expiration": "Eight Year",
+        "points": "-464.0000"
+      },
+      {
+        "expiration": "Nine Year",
+        "points": "-519.0000"
+      },
+      {
+        "expiration": "Ten Year",
+        "points": "-576.0000"
+      },
+      {
+        "expiration": "Fifteen Year",
+        "points": "-394.9100"
+      },
+      {
+        "expiration": "Twenty Year",
+        "points": "-509.0800"
+      },
+      {
+        "expiration": "30Y",
+        "points": "-790.0950"
+      }
+    ],
+    "audusd": [
+      {
+        "expiration": "Overnight",
+        "points": "0.6050"
+      },
+      {
+        "expiration": "Tomorrow Next",
+        "points": "0.4570"
+      },
+      {
+        "expiration": "Spot Next",
+        "points": "0.4500"
+      },
+      {
+        "expiration": "One Week",
+        "points": "0.7700"
+      },
+      {
+        "expiration": "Two Week",
+        "points": "1.5300"
+      },
+      {
+        "expiration": "Three Week",
+        "points": "2.2000"
+      },
+      {
+        "expiration": "One Month",
+        "points": "2.8700"
+      },
+      {
+        "expiration": "Two Month",
+        "points": "5.1600"
+      },
+      {
+        "expiration": "Three Month",
+        "points": "6.8900"
+      },
+      {
+        "expiration": "Four Month",
+        "points": "8.0000"
+      },
+      {
+        "expiration": "Five Month",
+        "points": "9.0100"
+      },
+      {
+        "expiration": "Six Month",
+        "points": "9.8600"
+      },
+      {
+        "expiration": "Seven Month",
+        "points": "10.2900"
+      },
+      {
+        "expiration": "Eight Month",
+        "points": "10.6800"
+      },
+      {
+        "expiration": "Nine Month",
+        "points": "10.8000"
+      },
+      {
+        "expiration": "Ten Month",
+        "points": "10.2200"
+      },
+      {
+        "expiration": "Eleven Month",
+        "points": "9.4000"
+      },
+      {
+        "expiration": "One Year",
+        "points": "8.6400"
+      },
+      {
+        "expiration": "Fifteen Month",
+        "points": "3.4100"
+      },
+      {
+        "expiration": "Twenty One Month",
+        "points": "-8.9400"
+      },
+      {
+        "expiration": "Two Year",
+        "points": "-10.5700"
+      },
+      {
+        "expiration": "Three Year",
+        "points": "-47.8800"
+      },
+      {
+        "expiration": "Four Year",
+        "points": "-85.4000"
+      },
+      {
+        "expiration": "Five Year",
+        "points": "-124.8000"
+      },
+      {
+        "expiration": "Six Year",
+        "points": "26.6350"
+      },
+      {
+        "expiration": "Seven Year",
+        "points": "0.9800"
+      },
+      {
+        "expiration": "Eight Year",
+        "points": "-19.6400"
+      },
+      {
+        "expiration": "Nine Year",
+        "points": "-47.7550"
+      },
+      {
+        "expiration": "Ten Year",
+        "points": "-82.8000"
+      },
+      {
+        "expiration": "12Y",
+        "points": "-119.5150"
+      },
+      {
+        "expiration": "Fifteen Year",
+        "points": "-151.5650"
+      },
+      {
+        "expiration": "Twenty Year",
+        "points": "-188.7650"
+      },
+      {
+        "expiration": "30Y",
+        "points": "-124.2650"
+      }
+    ],
+    "nzdusd": [
+      {
+        "expiration": "Overnight",
+        "points": "0.3000"
+      },
+      {
+        "expiration": "Tomorrow Next",
+        "points": "1.0740"
+      },
+      {
+        "expiration": "Spot Next",
+        "points": "1.0700"
+      },
+      {
+        "expiration": "One Week",
+        "points": "1.9900"
+      },
+      {
+        "expiration": "Two Week",
+        "points": "3.8100"
+      },
+      {
+        "expiration": "Three Week",
+        "points": "5.7100"
+      },
+      {
+        "expiration": "One Month",
+        "points": "7.9400"
+      },
+      {
+        "expiration": "Two Month",
+        "points": "15.4100"
+      },
+      {
+        "expiration": "Three Month",
+        "points": "23.1600"
+      },
+      {
+        "expiration": "Four Month",
+        "points": "30.3400"
+      },
+      {
+        "expiration": "Five Month",
+        "points": "36.5500"
+      },
+      {
+        "expiration": "Six Month",
+        "points": "43.1200"
+      },
+      {
+        "expiration": "Seven Month",
+        "points": "52.2300"
+      },
+      {
+        "expiration": "Eight Month",
+        "points": "56.5100"
+      },
+      {
+        "expiration": "Nine Month",
+        "points": "62.9700"
+      },
+      {
+        "expiration": "Ten Month",
+        "points": "67.2800"
+      },
+      {
+        "expiration": "Eleven Month",
+        "points": "73.5900"
+      },
+      {
+        "expiration": "One Year",
+        "points": "77.5400"
+      },
+      {
+        "expiration": "Fifteen Month",
+        "points": "86.6600"
+      },
+      {
+        "expiration": "Twenty One Month",
+        "points": "102.6000"
+      },
+      {
+        "expiration": "Two Year",
+        "points": "105.9100"
+      },
+      {
+        "expiration": "Three Year",
+        "points": "111.5000"
+      },
+      {
+        "expiration": "Four Year",
+        "points": "94.8000"
+      },
+      {
+        "expiration": "Five Year",
+        "points": "69.5000"
+      },
+      {
+        "expiration": "Six Year",
+        "points": "39.0000"
+      },
+      {
+        "expiration": "Seven Year",
+        "points": "10.0000"
+      },
+      {
+        "expiration": "Eight Year",
+        "points": "-27.0000"
+      },
+      {
+        "expiration": "Nine Year",
+        "points": "-63.0000"
+      },
+      {
+        "expiration": "Ten Year",
+        "points": "-80.0000"
+      }
+    ],
+    "usdjpy": [
+      {
+        "expiration": "Overnight",
+        "points": "-1.5830"
+      },
+      {
+        "expiration": "Tomorrow Next",
+        "points": "-1.5900"
+      },
+      {
+        "expiration": "Spot Next",
+        "points": "-1.5860"
+      },
+      {
+        "expiration": "One Week",
+        "points": "-11.0500"
+      },
+      {
+        "expiration": "Two Week",
+        "points": "-22.1300"
+      },
+      {
+        "expiration": "Three Week",
+        "points": "-33.0000"
+      },
+      {
+        "expiration": "One Month",
+        "points": "-47.8900"
+      },
+      {
+        "expiration": "Two Month",
+        "points": "-92.4900"
+      },
+      {
+        "expiration": "Three Month",
+        "points": "-139.0000"
+      },
+      {
+        "expiration": "Four Month",
+        "points": "-180.7000"
+      },
+      {
+        "expiration": "Five Month",
+        "points": "-216.9000"
+      },
+      {
+        "expiration": "Six Month",
+        "points": "-255.9500"
+      },
+      {
+        "expiration": "Seven Month",
+        "points": "-292.4500"
+      },
+      {
+        "expiration": "Eight Month",
+        "points": "-329.8000"
+      },
+      {
+        "expiration": "Nine Month",
+        "points": "-364.1500"
+      },
+      {
+        "expiration": "Ten Month",
+        "points": "-398.0000"
+      },
+      {
+        "expiration": "Eleven Month",
+        "points": "-430.9000"
+      },
+      {
+        "expiration": "One Year",
+        "points": "-462.5000"
+      },
+      {
+        "expiration": "Fifteen Month",
+        "points": "-557.0000"
+      },
+      {
+        "expiration": "Twenty One Month",
+        "points": "-726.0000"
+      },
+      {
+        "expiration": "Two Year",
+        "points": "-808.4200"
+      },
+      {
+        "expiration": "Three Year",
+        "points": "-1142.0000"
+      },
+      {
+        "expiration": "Four Year",
+        "points": "-1497.0000"
+      },
+      {
+        "expiration": "Five Year",
+        "points": "-1835.0000"
+      },
+      {
+        "expiration": "Six Year",
+        "points": "-2194.0000"
+      },
+      {
+        "expiration": "Seven Year",
+        "points": "-2536.0000"
+      },
+      {
+        "expiration": "Eight Year",
+        "points": "-2864.0000"
+      },
+      {
+        "expiration": "Nine Year",
+        "points": "-3160.0000"
+      },
+      {
+        "expiration": "Ten Year",
+        "points": "-3455.0000"
+      },
+      {
+        "expiration": "12Y",
+        "points": "-3548.5000"
+      },
+      {
+        "expiration": "Fifteen Year",
+        "points": "-4126.0000"
+      },
+      {
+        "expiration": "Twenty Year",
+        "points": "-4867.0000"
+      },
+      {
+        "expiration": "30Y",
+        "points": "-5621.6299"
+      }
+    ],
+    "usdchf": [
+      {
+        "expiration": "Overnight",
+        "points": "-0.9590"
+      },
+      {
+        "expiration": "Tomorrow Next",
+        "points": "-0.1090"
+      },
+      {
+        "expiration": "Spot Next",
+        "points": "-0.9520"
+      },
+      {
+        "expiration": "One Week",
+        "points": "-6.6700"
+      },
+      {
+        "expiration": "Two Week",
+        "points": "-13.3400"
+      },
+      {
+        "expiration": "Three Week",
+        "points": "-19.8800"
+      },
+      {
+        "expiration": "One Month",
+        "points": "-29.0000"
+      },
+      {
+        "expiration": "Two Month",
+        "points": "-56.3500"
+      },
+      {
+        "expiration": "Three Month",
+        "points": "-84.2500"
+      },
+      {
+        "expiration": "Four Month",
+        "points": "-111.1700"
+      },
+      {
+        "expiration": "Five Month",
+        "points": "-134.5300"
+      },
+      {
+        "expiration": "Six Month",
+        "points": "-159.4600"
+      },
+      {
+        "expiration": "Seven Month",
+        "points": "-184.5300"
+      },
+      {
+        "expiration": "Eight Month",
+        "points": "-208.8000"
+      },
+      {
+        "expiration": "Nine Month",
+        "points": "-230.8000"
+      },
+      {
+        "expiration": "Ten Month",
+        "points": "-254.2000"
+      },
+      {
+        "expiration": "Eleven Month",
+        "points": "-277.7000"
+      },
+      {
+        "expiration": "One Year",
+        "points": "-300.2000"
+      },
+      {
+        "expiration": "Fifteen Month",
+        "points": "-367.1000"
+      },
+      {
+        "expiration": "Twenty One Month",
+        "points": "-493.2300"
+      },
+      {
+        "expiration": "Two Year",
+        "points": "-554.3700"
+      },
+      {
+        "expiration": "Three Year",
+        "points": "-793.6000"
+      },
+      {
+        "expiration": "Four Year",
+        "points": "-1021.2000"
+      },
+      {
+        "expiration": "Five Year",
+        "points": "-1238.9000"
+      },
+      {
+        "expiration": "Six Year",
+        "points": "-1469.0000"
+      },
+      {
+        "expiration": "Seven Year",
+        "points": "-1686.0000"
+      },
+      {
+        "expiration": "Eight Year",
+        "points": "-1901.0000"
+      },
+      {
+        "expiration": "Nine Year",
+        "points": "-2111.0000"
+      },
+      {
+        "expiration": "Ten Year",
+        "points": "-2313.0000"
+      },
+      {
+        "expiration": "Fifteen Year",
+        "points": "-3266.4700"
+      },
+      {
+        "expiration": "Twenty Year",
+        "points": "-4059.1599"
+      }
+    ],
+    "usdcad": [
+      {
+        "expiration": "Overnight",
+        "points": "-0.0530"
+      },
+      {
+        "expiration": "Tomorrow Next",
+        "points": "-0.6820"
+      },
+      {
+        "expiration": "Spot Next",
+        "points": "-0.6930"
+      },
+      {
+        "expiration": "One Week",
+        "points": "-4.7400"
+      },
+      {
+        "expiration": "Two Week",
+        "points": "-9.4600"
+      },
+      {
+        "expiration": "Three Week",
+        "points": "-14.2300"
+      },
+      {
+        "expiration": "One Month",
+        "points": "-20.8400"
+      },
+      {
+        "expiration": "Two Month",
+        "points": "-40.1500"
+      },
+      {
+        "expiration": "Three Month",
+        "points": "-60.2200"
+      },
+      {
+        "expiration": "Four Month",
+        "points": "-78.2800"
+      },
+      {
+        "expiration": "Five Month",
+        "points": "-93.9300"
+      },
+      {
+        "expiration": "Six Month",
+        "points": "-111.0000"
+      },
+      {
+        "expiration": "Seven Month",
+        "points": "-127.2000"
+      },
+      {
+        "expiration": "Eight Month",
+        "points": "-143.0500"
+      },
+      {
+        "expiration": "Nine Month",
+        "points": "-157.2100"
+      },
+      {
+        "expiration": "Ten Month",
+        "points": "-171.0800"
+      },
+      {
+        "expiration": "Eleven Month",
+        "points": "-183.6800"
+      },
+      {
+        "expiration": "One Year",
+        "points": "-196.6300"
+      },
+      {
+        "expiration": "Fifteen Month",
+        "points": "-230.0000"
+      },
+      {
+        "expiration": "Twenty One Month",
+        "points": "-283.8200"
+      },
+      {
+        "expiration": "Two Year",
+        "points": "-310.7400"
+      },
+      {
+        "expiration": "Three Year",
+        "points": "-416.1800"
+      },
+      {
+        "expiration": "Four Year",
+        "points": "-516.6900"
+      },
+      {
+        "expiration": "Five Year",
+        "points": "-605.7200"
+      },
+      {
+        "expiration": "Six Year",
+        "points": "-701.0000"
+      },
+      {
+        "expiration": "Seven Year",
+        "points": "-772.0000"
+      },
+      {
+        "expiration": "Eight Year",
+        "points": "-853.0000"
+      },
+      {
+        "expiration": "Nine Year",
+        "points": "-922.0000"
+      },
+      {
+        "expiration": "Ten Year",
+        "points": "-968.7200"
+      },
+      {
+        "expiration": "12Y",
+        "points": "-1068.9550"
+      },
+      {
+        "expiration": "Fifteen Year",
+        "points": "-1317.5200"
+      },
+      {
+        "expiration": "Twenty Year",
+        "points": "-1806.3800"
+      }
+    ]
   }
 }
