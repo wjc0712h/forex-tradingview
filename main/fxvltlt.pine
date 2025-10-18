@@ -1,0 +1,91 @@
+//WOOJIN CHOI, 10/18/2025
+//@version=6
+indicator(title="FX Volatility", shorttitle="FXVLTLT", overlay=false)
+
+prefix = input.string("OANDA", title ="FX source", options = ["OANDA", "TASTYFX"])
+
+atr_length = input.int(14,  title="ATR Length",  minval=1, group= "Settings")
+zscore_length = input.int(100, title="ZSCORE Length", minval=1, group=  "Settings")
+
+show_all = input.bool(true, "Show All", group="Display")
+show_table = input.bool(true, "Show Table",  group="Display")
+
+color_usd = color(#0717ff)
+color_eur = color(#4dd0e1)
+color_gbp = color(#9C27B0)
+color_jpy = color(#FF9800)
+color_cad = color(#ff0000)
+color_aud = color(#04dd74)
+color_nzd = color(#22ab94)
+color_chf = color(#E040FB)
+
+vol_eurusd = ta.ema(request.security(prefix + ":eurusd", timeframe.period, math.max(math.max(high - low, math.abs(high - close[1])), math.abs(low - close[1]))),atr_length)
+vol_eurgbp = ta.ema(request.security(prefix + ":eurgbp", timeframe.period, math.max(math.max(high - low, math.abs(high - close[1])), math.abs(low - close[1]))),atr_length)
+vol_eurchf = ta.ema(request.security(prefix + ":eurchf", timeframe.period, math.max(math.max(high - low, math.abs(high - close[1])), math.abs(low - close[1]))),atr_length)
+vol_eurjpy = ta.ema(request.security(prefix + ":eurjpy", timeframe.period, math.max(math.max(high - low, math.abs(high - close[1])), math.abs(low - close[1]))) / 100,atr_length)
+vol_euraud = ta.ema(request.security(prefix + ":euraud", timeframe.period, math.max(math.max(high - low, math.abs(high - close[1])), math.abs(low - close[1]))),atr_length)
+vol_eurcad = ta.ema(request.security(prefix + ":eurcad", timeframe.period, math.max(math.max(high - low, math.abs(high - close[1])), math.abs(low - close[1]))),atr_length)
+vol_eurnzd = ta.ema(request.security(prefix + ":eurnzd", timeframe.period, math.max(math.max(high - low, math.abs(high - close[1])), math.abs(low - close[1]))),atr_length)
+vol_usdchf = ta.ema(request.security(prefix + ":usdchf", timeframe.period, math.max(math.max(high - low, math.abs(high - close[1])), math.abs(low - close[1]))),atr_length)
+vol_usdjpy = ta.ema(request.security(prefix + ":usdjpy", timeframe.period, math.max(math.max(high - low, math.abs(high - close[1])), math.abs(low - close[1]))) / 100,atr_length)
+vol_usdcad = ta.ema(request.security(prefix + ":usdcad", timeframe.period, math.max(math.max(high - low, math.abs(high - close[1])), math.abs(low - close[1]))),atr_length)
+vol_gbpusd = ta.ema(request.security(prefix + ":gbpusd", timeframe.period, math.max(math.max(high - low, math.abs(high - close[1])), math.abs(low - close[1]))),atr_length)
+vol_gbpchf = ta.ema(request.security(prefix + ":gbpchf", timeframe.period, math.max(math.max(high - low, math.abs(high - close[1])), math.abs(low - close[1]))),atr_length)
+vol_gbpjpy = ta.ema(request.security(prefix + ":gbpjpy", timeframe.period, math.max(math.max(high - low, math.abs(high - close[1])), math.abs(low - close[1]))) / 100,atr_length)
+vol_gbpaud = ta.ema(request.security(prefix + ":gbpaud", timeframe.period, math.max(math.max(high - low, math.abs(high - close[1])), math.abs(low - close[1]))),atr_length)
+vol_gbpcad = ta.ema(request.security(prefix + ":gbpcad", timeframe.period, math.max(math.max(high - low, math.abs(high - close[1])), math.abs(low - close[1]))),atr_length)
+vol_gbpnzd = ta.ema(request.security(prefix + ":gbpnzd", timeframe.period, math.max(math.max(high - low, math.abs(high - close[1])), math.abs(low - close[1]))),atr_length)
+vol_chfjpy = ta.ema(request.security(prefix + ":chfjpy", timeframe.period, math.max(math.max(high - low, math.abs(high - close[1])), math.abs(low - close[1]))) / 100,atr_length)
+vol_audusd = ta.ema(request.security(prefix + ":audusd", timeframe.period, math.max(math.max(high - low, math.abs(high - close[1])), math.abs(low - close[1]))),atr_length)
+vol_audchf = ta.ema(request.security(prefix + ":audchf", timeframe.period, math.max(math.max(high - low, math.abs(high - close[1])), math.abs(low - close[1]))),atr_length)
+vol_audjpy = ta.ema(request.security(prefix + ":audjpy", timeframe.period, math.max(math.max(high - low, math.abs(high - close[1])), math.abs(low - close[1]))) / 100,atr_length)
+vol_audcad = ta.ema(request.security(prefix + ":audcad", timeframe.period, math.max(math.max(high - low, math.abs(high - close[1])), math.abs(low - close[1]))),atr_length)
+vol_audnzd = ta.ema(request.security(prefix + ":audnzd", timeframe.period, math.max(math.max(high - low, math.abs(high - close[1])), math.abs(low - close[1]))),atr_length)
+vol_cadchf = ta.ema(request.security(prefix + ":cadchf", timeframe.period, math.max(math.max(high - low, math.abs(high - close[1])), math.abs(low - close[1]))),atr_length)
+vol_cadjpy = ta.ema(request.security(prefix + ":cadjpy", timeframe.period, math.max(math.max(high - low, math.abs(high - close[1])), math.abs(low - close[1]))) / 100,atr_length)
+vol_nzdusd = ta.ema(request.security(prefix + ":nzdusd", timeframe.period, math.max(math.max(high - low, math.abs(high - close[1])), math.abs(low - close[1]))),atr_length)
+vol_nzdchf = ta.ema(request.security(prefix + ":nzdchf", timeframe.period, math.max(math.max(high - low, math.abs(high - close[1])), math.abs(low - close[1]))),atr_length)
+vol_nzdjpy = ta.ema(request.security(prefix + ":nzdjpy", timeframe.period, math.max(math.max(high - low, math.abs(high - close[1])), math.abs(low - close[1]))) / 100,atr_length)
+vol_nzdcad = ta.ema(request.security(prefix + ":nzdcad", timeframe.period, math.max(math.max(high - low, math.abs(high - close[1])), math.abs(low - close[1]))),atr_length)
+
+// Weighted Currency Strength
+vol_usd = (-vol_eurusd * 0.40 - vol_gbpusd * 0.20 + vol_usdjpy * 0.25 + vol_usdchf * 0.05 - vol_audusd * 0.07 + vol_usdcad * 0.02 - vol_nzdusd * 0.01)
+vol_eur = (vol_eurusd * 0.50 + vol_eurjpy * 0.20 + vol_eurgbp * 0.15 + vol_eurchf * 0.05 + vol_euraud * 0.05 + vol_eurcad * 0.03 + vol_eurnzd * 0.02)
+vol_gbp = (-vol_eurgbp * 0.12 + vol_gbpusd * 0.45 + vol_gbpjpy * 0.20 + vol_gbpchf * 0.08 + vol_gbpaud * 0.08 + vol_gbpcad * 0.04 + vol_gbpnzd * 0.03)
+vol_jpy = (-vol_eurjpy * 0.20 - vol_usdjpy * 0.40 - vol_gbpjpy * 0.20 - vol_audjpy * 0.10 - vol_cadjpy * 0.05 - vol_chfjpy * 0.03 - vol_nzdjpy * 0.02)
+vol_cad = (-vol_eurcad * 0.05 - vol_usdcad * 0.58 - vol_gbpcad * 0.08 + vol_cadchf * 0.05 + vol_cadjpy * 0.08 - vol_audcad * 0.10 - vol_nzdcad * 0.06)
+vol_aud = (-vol_euraud * 0.08 + vol_audusd * 0.52 - vol_gbpaud * 0.15 + vol_audchf * 0.05 + vol_audjpy * 0.10 + vol_audcad * 0.06 + vol_audnzd * 0.04)
+vol_nzd = (-vol_eurnzd * 0.03 + vol_nzdusd * 0.58 - vol_gbpnzd * 0.08 + vol_nzdchf * 0.05 + vol_nzdjpy * 0.08 - vol_audnzd * 0.12 + vol_nzdcad * 0.06)
+vol_chf = (-vol_eurchf * 0.25 - vol_usdchf * 0.40 - vol_gbpchf * 0.15 + vol_chfjpy * 0.08 - vol_audchf * 0.05 - vol_cadchf * 0.04 - vol_nzdchf * 0.03)
+
+symbol = syminfo.ticker
+upperSymbol = str.upper(symbol)
+base_currency = str.substring(symbol, 0, 3)     
+quote_currency = str.substring(symbol, 3, 6)
+
+showUSD = str.contains(upperSymbol, "USD")
+showEUR = str.contains(upperSymbol, "EUR")
+showGBP = str.contains(upperSymbol, "GBP")
+showJPY = str.contains(upperSymbol, "JPY")
+showCAD = str.contains(upperSymbol, "CAD")
+showAUD = str.contains(upperSymbol, "AUD")
+showNZD = str.contains(upperSymbol, "NZD")
+showCHF = str.contains(upperSymbol, "CHF")
+
+zscore(src, length) =>
+    mean = ta.ema(src, length)
+    stddev = ta.stdev(src, length)
+    (src - mean) / stddev
+
+plot(showUSD or show_all ? zscore(vol_usd, zscore_length): na, title="USD", color= color_usd, linewidth=2)
+plot(showEUR or show_all ? zscore(vol_eur, zscore_length): na, title="EUR", color= color_eur, linewidth=2)
+plot(showGBP or show_all ? zscore(vol_gbp, zscore_length): na, title="GBP", color= color_gbp, linewidth=2)
+plot(showJPY or show_all ? zscore(vol_jpy, zscore_length): na, title="JPY", color= color_jpy, linewidth=2)
+plot(showCAD or show_all ? zscore(vol_cad, zscore_length): na, title="CAD", color= color_cad, linewidth=2)
+plot(showAUD or show_all ? zscore(vol_aud, zscore_length): na, title="AUD", color= color_aud, linewidth=2)
+plot(showNZD or show_all ? zscore(vol_nzd, zscore_length): na, title="NZD", color= color_nzd, linewidth=2)
+plot(showCHF or show_all ? zscore(vol_chf, zscore_length): na, title="CHF", color= color_chf, linewidth=2)
+
+zero = hline(0, "zero", color=color.rgb(0, 0, 0), linestyle=hline.style_solid)
+u1 = hline(2, "upper 2σ", color=color.rgb(0, 0, 0), linestyle=hline.style_solid)
+l1 = hline(-2, "lower 2σ", color=color.rgb(0, 0, 0), linestyle=hline.style_solid)

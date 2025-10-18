@@ -1,11 +1,11 @@
-//WOOJIN CHOI, 10/05/2025
+//WOOJIN CHOI, 10/18/2025
 //@version=6
-indicator(title="Forex Overview True Strength Index", shorttitle="FOTSI", overlay=false)
+indicator(title="Forex True Strength Index", shorttitle="FXTSI", overlay=false)
 
 prefix = input.string("OANDA", title ="FX source", options = ["OANDA", "TASTYFX"])
 
 length1 = input.int(0,  title="Momentum period",  minval=0, group= "Settings")
-length2 = input.int(5, title="Smoothing period", minval=1, group=  "Settings")
+length2 = input.int(25, title="Smoothing period", minval=1, group=  "Settings")
 length3 = input.int(15, title="Smoothing period", minval=1, group= "Settings")
 slope_length = input.int(2, "Slope Length", group="Settings")
 
