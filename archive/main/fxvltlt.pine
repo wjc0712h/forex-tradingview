@@ -1,0 +1,170 @@
+//WOOJIN CHOI, 10/23/2025
+//@version=6
+indicator(title="FX Volatility", shorttitle="FXVLTLT", overlay=false)
+
+prefix = input.string("OANDA", title ="FX source", options = ["OANDA", "TASTYFX"])
+
+atr_length = input.int(14,  title="ATR Length",  minval=1, group= "Settings")
+zscore_length = input.int(50, title="ZSCORE Length", minval=1, group=  "Settings")
+iterations = input.int(3, title="Separation Iterations", minval=1, maxval=5, group= "Settings")
+
+show_all = input.bool(true, "Show All", group="Display")
+
+color_usd = color(#0717ff)
+color_eur = color(#4dd0e1)
+color_gbp = color(#9C27B0)
+color_jpy = color(#FF9800)
+color_cad = color(#ff0000)
+color_aud = color(#04dd74)
+color_nzd = color(#22ab94)
+color_chf = color(#E040FB)
+
+get_atr(pair, divide_by_100 = false) =>
+    raw = request.security(prefix + ":" + pair, timeframe.period, math.max(math.max(high - low, math.abs(high - close[1])), math.abs(low - close[1])))
+    result = divide_by_100 ? raw / 100 : raw
+    ta.ema(result, atr_length)
+
+// 28개 통화쌍의 ATR
+vol_eurusd = get_atr("eurusd")
+vol_eurgbp = get_atr("eurgbp")
+vol_eurchf = get_atr("eurchf")
+vol_eurjpy = get_atr("eurjpy", true)
+vol_euraud = get_atr("euraud")
+vol_eurcad = get_atr("eurcad")
+vol_eurnzd = get_atr("eurnzd")
+vol_usdchf = get_atr("usdchf")
+vol_usdjpy = get_atr("usdjpy", true)
+vol_usdcad = get_atr("usdcad")
+vol_gbpusd = get_atr("gbpusd")
+vol_gbpchf = get_atr("gbpchf")
+vol_gbpjpy = get_atr("gbpjpy", true)
+vol_gbpaud = get_atr("gbpaud")
+vol_gbpcad = get_atr("gbpcad")
+vol_gbpnzd = get_atr("gbpnzd")
+vol_chfjpy = get_atr("chfjpy", true)
+vol_audusd = get_atr("audusd")
+vol_audchf = get_atr("audchf")
+vol_audjpy = get_atr("audjpy", true)
+vol_audcad = get_atr("audcad")
+vol_audnzd = get_atr("audnzd")
+vol_cadchf = get_atr("cadchf")
+vol_cadjpy = get_atr("cadjpy", true)
+vol_nzdusd = get_atr("nzdusd")
+vol_nzdchf = get_atr("nzdchf")
+vol_nzdjpy = get_atr("nzdjpy", true)
+vol_nzdcad = get_atr("nzdcad")
+
+separate_volatility(v_eur, v_usd, v_gbp, v_jpy, v_chf, v_aud, v_cad, v_nzd) =>
+    // EUR 분리
+    eur_sum = (vol_eurusd - v_usd*0.5) + (vol_eurgbp - v_gbp*0.5) + (vol_eurchf - v_chf*0.5) + (vol_eurjpy - v_jpy*0.5) + (vol_euraud - v_aud*0.5) + (vol_eurcad - v_cad*0.5) + (vol_eurnzd - v_nzd*0.5)
+    new_eur = math.max(0, eur_sum / 7)
+    
+    // USD 분리
+    usd_sum = (vol_eurusd - new_eur*0.5) + (vol_gbpusd - v_gbp*0.5) + (vol_usdjpy - v_jpy*0.5) + (vol_usdchf - v_chf*0.5) + (vol_audusd - v_aud*0.5) + (vol_usdcad - v_cad*0.5) + (vol_nzdusd - v_nzd*0.5)
+    new_usd = math.max(0, usd_sum / 7)
+    
+    // GBP 분리
+    gbp_sum = (vol_eurgbp - new_eur*0.5) + (vol_gbpusd - new_usd*0.5) + (vol_gbpchf - v_chf*0.5) + (vol_gbpjpy - v_jpy*0.5) + (vol_gbpaud - v_aud*0.5) + (vol_gbpcad - v_cad*0.5) + (vol_gbpnzd - v_nzd*0.5)
+    new_gbp = math.max(0, gbp_sum / 7)
+    
+    // JPY 분리
+    jpy_sum = (vol_eurjpy - new_eur*0.5) + (vol_usdjpy - new_usd*0.5) + (vol_gbpjpy - new_gbp*0.5) + (vol_chfjpy - v_chf*0.5) + (vol_audjpy - v_aud*0.5) + (vol_cadjpy - v_cad*0.5) + (vol_nzdjpy - v_nzd*0.5)
+    new_jpy = math.max(0, jpy_sum / 7)
+    
+    // CHF 분리
+    chf_sum = (vol_eurchf - new_eur*0.5) + (vol_usdchf - new_usd*0.5) + (vol_gbpchf - new_gbp*0.5) + (vol_chfjpy - new_jpy*0.5) + (vol_audchf - v_aud*0.5) + (vol_cadchf - v_cad*0.5) + (vol_nzdchf - v_nzd*0.5)
+    new_chf = math.max(0, chf_sum / 7)
+    
+    // AUD 분리
+    aud_sum = (vol_euraud - new_eur*0.5) + (vol_audusd - new_usd*0.5) + (vol_gbpaud - new_gbp*0.5) + (vol_audchf - new_chf*0.5) + (vol_audjpy - new_jpy*0.5) + (vol_audcad - v_cad*0.5) + (vol_audnzd - v_nzd*0.5)
+    new_aud = math.max(0, aud_sum / 7)
+    
+    // CAD 분리
+    cad_sum = (vol_eurcad - new_eur*0.5) + (vol_usdcad - new_usd*0.5) + (vol_gbpcad - new_gbp*0.5) + (vol_cadchf - new_chf*0.5) + (vol_cadjpy - new_jpy*0.5) + (vol_audcad - new_aud*0.5) + (vol_nzdcad - v_nzd*0.5)
+    new_cad = math.max(0, cad_sum / 7)
+    
+    // NZD 분리
+    nzd_sum = (vol_eurnzd - new_eur*0.5) + (vol_nzdusd - new_usd*0.5) + (vol_gbpnzd - new_gbp*0.5) + (vol_nzdchf - new_chf*0.5) + (vol_nzdjpy - new_jpy*0.5) + (vol_audnzd - new_aud*0.5) + (vol_nzdcad - new_cad*0.5)
+    new_nzd = math.max(0, nzd_sum / 7)
+    
+    [new_eur, new_usd, new_gbp, new_jpy, new_chf, new_aud, new_cad, new_nzd]
+
+v_eur = (vol_eurusd + vol_eurgbp + vol_eurchf + vol_eurjpy + vol_euraud + vol_eurcad + vol_eurnzd) / 7
+v_usd = (vol_eurusd + vol_gbpusd + vol_usdjpy + vol_usdchf + vol_audusd + vol_usdcad + vol_nzdusd) / 7
+v_gbp = (vol_eurgbp + vol_gbpusd + vol_gbpchf + vol_gbpjpy + vol_gbpaud + vol_gbpcad + vol_gbpnzd) / 7
+v_jpy = (vol_eurjpy + vol_usdjpy + vol_gbpjpy + vol_chfjpy + vol_audjpy + vol_cadjpy + vol_nzdjpy) / 7
+v_chf = (vol_eurchf + vol_usdchf + vol_gbpchf + vol_chfjpy + vol_audchf + vol_cadchf + vol_nzdchf) / 7
+v_aud = (vol_euraud + vol_audusd + vol_gbpaud + vol_audchf + vol_audjpy + vol_audcad + vol_audnzd) / 7
+v_cad = (vol_eurcad + vol_usdcad + vol_gbpcad + vol_cadchf + vol_cadjpy + vol_audcad + vol_nzdcad) / 7
+v_nzd = (vol_eurnzd + vol_nzdusd + vol_gbpnzd + vol_nzdchf + vol_nzdjpy + vol_audnzd + vol_nzdcad) / 7
+
+[v_eur1, v_usd1, v_gbp1, v_jpy1, v_chf1, v_aud1, v_cad1, v_nzd1] = separate_volatility(v_eur, v_usd, v_gbp, v_jpy, v_chf, v_aud, v_cad, v_nzd)
+
+[v_eur2_temp, v_usd2_temp, v_gbp2_temp, v_jpy2_temp, v_chf2_temp, v_aud2_temp, v_cad2_temp, v_nzd2_temp] = separate_volatility(v_eur1, v_usd1, v_gbp1, v_jpy1, v_chf1, v_aud1, v_cad1, v_nzd1)
+
+v_eur2 = iterations >= 2 ? v_eur2_temp : v_eur1
+v_usd2 = iterations >= 2 ? v_usd2_temp : v_usd1
+v_gbp2 = iterations >= 2 ? v_gbp2_temp : v_gbp1
+v_jpy2 = iterations >= 2 ? v_jpy2_temp : v_jpy1
+v_chf2 = iterations >= 2 ? v_chf2_temp : v_chf1
+v_aud2 = iterations >= 2 ? v_aud2_temp : v_aud1
+v_cad2 = iterations >= 2 ? v_cad2_temp : v_cad1
+v_nzd2 = iterations >= 2 ? v_nzd2_temp : v_nzd1
+
+[v_eur3_temp, v_usd3_temp, v_gbp3_temp, v_jpy3_temp, v_chf3_temp, v_aud3_temp, v_cad3_temp, v_nzd3_temp] = separate_volatility(v_eur2, v_usd2, v_gbp2, v_jpy2, v_chf2, v_aud2, v_cad2, v_nzd2)
+
+v_eur3 = iterations >= 3 ? v_eur3_temp : v_eur2
+v_usd3 = iterations >= 3 ? v_usd3_temp : v_usd2
+v_gbp3 = iterations >= 3 ? v_gbp3_temp : v_gbp2
+v_jpy3 = iterations >= 3 ? v_jpy3_temp : v_jpy2
+v_chf3 = iterations >= 3 ? v_chf3_temp : v_chf2
+v_aud3 = iterations >= 3 ? v_aud3_temp : v_aud2
+v_cad3 = iterations >= 3 ? v_cad3_temp : v_cad2
+v_nzd3 = iterations >= 3 ? v_nzd3_temp : v_nzd2
+
+vol_eur = v_eur3
+vol_usd = v_usd3
+vol_gbp = v_gbp3
+vol_jpy = v_jpy3
+vol_chf = v_chf3
+vol_aud = v_aud3
+vol_cad = v_cad3
+vol_nzd = v_nzd3
+
+symbol = syminfo.ticker
+upperSymbol = str.upper(symbol)
+
+showUSD = str.contains(upperSymbol, "USD")
+showEUR = str.contains(upperSymbol, "EUR")
+showGBP = str.contains(upperSymbol, "GBP")
+showJPY = str.contains(upperSymbol, "JPY")
+showCAD = str.contains(upperSymbol, "CAD")
+showAUD = str.contains(upperSymbol, "AUD")
+showNZD = str.contains(upperSymbol, "NZD")
+showCHF = str.contains(upperSymbol, "CHF")
+
+zscore(src, length) =>
+    mean = ta.ema(src, length)
+    stddev = ta.stdev(src, length)
+    (src - mean) / stddev
+
+plot(zscore(vol_usd, zscore_length), title="USD", color= color_usd, linewidth=1, linestyle = plot.linestyle_dotted)
+plot(zscore(vol_eur, zscore_length), title="EUR", color= color_eur, linewidth=1, linestyle = plot.linestyle_dotted)
+plot(zscore(vol_gbp, zscore_length), title="GBP", color= color_gbp, linewidth=1, linestyle = plot.linestyle_dotted)
+plot(zscore(vol_jpy, zscore_length), title="JPY", color= color_jpy, linewidth=1, linestyle = plot.linestyle_dotted)
+plot(zscore(vol_cad, zscore_length), title="CAD", color= color_cad, linewidth=1, linestyle = plot.linestyle_dotted)
+plot(zscore(vol_aud, zscore_length), title="AUD", color= color_aud, linewidth=1, linestyle = plot.linestyle_dotted)
+plot(zscore(vol_nzd, zscore_length), title="NZD", color= color_nzd, linewidth=1, linestyle = plot.linestyle_dotted)
+plot(zscore(vol_chf, zscore_length), title="CHF", color= color_chf, linewidth=1, linestyle = plot.linestyle_dotted)
+
+plot(showUSD ? zscore(vol_usd, zscore_length): na, title="USD", color= color_usd, linewidth=2)
+plot(showEUR ? zscore(vol_eur, zscore_length): na, title="EUR", color= color_eur, linewidth=2)
+plot(showGBP ? zscore(vol_gbp, zscore_length): na, title="GBP", color= color_gbp, linewidth=2)
+plot(showJPY ? zscore(vol_jpy, zscore_length): na, title="JPY", color= color_jpy, linewidth=2)
+plot(showCAD ? zscore(vol_cad, zscore_length): na, title="CAD", color= color_cad, linewidth=2)
+plot(showAUD ? zscore(vol_aud, zscore_length): na, title="AUD", color= color_aud, linewidth=2)
+plot(showNZD ? zscore(vol_nzd, zscore_length): na, title="NZD", color= color_nzd, linewidth=2)
+plot(showCHF ? zscore(vol_chf, zscore_length): na, title="CHF", color= color_chf, linewidth=2)
+zero = hline(0, "zero", color=color.rgb(0, 0, 0), linestyle=hline.style_dotted)
+u1 = hline(5, "upper 5σ", color=color.rgb(0, 0, 0), linestyle=hline.style_solid)
+l1 = hline(-2, "lower -2σ", color=color.rgb(0, 0, 0), linestyle=hline.style_solid)

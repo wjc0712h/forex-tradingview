@@ -1,0 +1,305 @@
+//@version=6
+indicator(title="FXTSI-ULTIMATE", shorttitle="FXTSI-ult", overlay=false)
+
+prefix = input.string("OANDA", title ="FX source", options = ["OANDA", "TASTYFX", "IG"])
+
+length1 = input.int(1,  title="Momentum period",  minval=1, group= "Settings")
+length2 = input.int(25, title="Smoothing period", minval=1, group=  "Settings")
+length3 = input.int(15, title="Smoothing period", minval=1, group= "Settings")
+slope_length = input.int(3, "Slope Length", group="Settings")
+
+lookback = input.int(100, "Lookback Period", group="Adaptive Bands")
+stdev_mult1 = input.float(1, "1σ", group="Adaptive Bands")
+stdev_mult2 = input.float(2, "2σ", group="Adaptive Bands")
+stdev_mult3 = input.float(3, "3σ", group="Adaptive Bands")
+smooth_bands = input.bool(true, "Smooth Bands?", group="Adaptive Bands")
+band_smooth_length = input.int(3, "Band Smoothing", minval=1, group="Adaptive Bands")
+
+show_all = input.bool(true, "Show All", group="Display")
+show_table = input.bool(true, "Show Table", group="Display")
+apply_zero_sum = input.bool(true, "Apply Zero-sum", group = "Display")
+
+color_usd = color(#0717ff)
+color_eur = color(#4dd0e1)
+color_gbp = color(#9C27B0)
+color_jpy = color(#FF9800)
+color_cad = color(#ff0000)
+color_aud = color(#04dd74)
+color_nzd = color(#22ab94)
+color_chf = color(#E040FB)
+
+color_usd2 = color.new(#0717ff, 50)
+color_eur2 = color.new(#4dd0e1, 50)
+color_gbp2 = color.new(#9C27B0, 50)
+color_jpy2 = color.new(#FF9800, 50)
+color_cad2 = color.new(#ff0000, 50)
+color_aud2 = color.new(#04dd74, 50)
+color_nzd2 = color.new(#22ab94, 50)
+color_chf2 = color.new(#E040FB, 50)
+
+mom_eurusd = request.security(prefix + ":eurusd", timeframe.period, math.log(close / close[length1]) * 100)
+mom_eurgbp = request.security(prefix + ":eurgbp", timeframe.period, math.log(close / close[length1]) * 100)
+mom_eurchf = request.security(prefix + ":eurchf", timeframe.period, math.log(close / close[length1]) * 100)
+mom_eurjpy = request.security(prefix + ":eurjpy", timeframe.period, math.log(close / close[length1]) * 100)
+mom_euraud = request.security(prefix + ":euraud", timeframe.period, math.log(close / close[length1]) * 100)
+mom_eurcad = request.security(prefix + ":eurcad", timeframe.period, math.log(close / close[length1]) * 100)
+mom_eurnzd = request.security(prefix + ":eurnzd", timeframe.period, math.log(close / close[length1]) * 100)
+mom_usdchf = request.security(prefix + ":usdchf", timeframe.period, math.log(close / close[length1]) * 100)
+mom_usdjpy = request.security(prefix + ":usdjpy", timeframe.period, math.log(close / close[length1]) * 100)
+mom_usdcad = request.security(prefix + ":usdcad", timeframe.period, math.log(close / close[length1]) * 100)
+mom_gbpusd = request.security(prefix + ":gbpusd", timeframe.period, math.log(close / close[length1]) * 100)
+mom_gbpchf = request.security(prefix + ":gbpchf", timeframe.period, math.log(close / close[length1]) * 100)
+mom_gbpjpy = request.security(prefix + ":gbpjpy", timeframe.period, math.log(close / close[length1]) * 100)
+mom_gbpaud = request.security(prefix + ":gbpaud", timeframe.period, math.log(close / close[length1]) * 100)
+mom_gbpcad = request.security(prefix + ":gbpcad", timeframe.period, math.log(close / close[length1]) * 100)
+mom_gbpnzd = request.security(prefix + ":gbpnzd", timeframe.period, math.log(close / close[length1]) * 100)
+mom_chfjpy = request.security(prefix + ":chfjpy", timeframe.period, math.log(close / close[length1]) * 100)
+mom_audusd = request.security(prefix + ":audusd", timeframe.period, math.log(close / close[length1]) * 100)
+mom_audchf = request.security(prefix + ":audchf", timeframe.period, math.log(close / close[length1]) * 100)
+mom_audjpy = request.security(prefix + ":audjpy", timeframe.period, math.log(close / close[length1]) * 100)
+mom_audcad = request.security(prefix + ":audcad", timeframe.period, math.log(close / close[length1]) * 100)
+mom_audnzd = request.security(prefix + ":audnzd", timeframe.period, math.log(close / close[length1]) * 100)
+mom_cadchf = request.security(prefix + ":cadchf", timeframe.period, math.log(close / close[length1]) * 100)
+mom_cadjpy = request.security(prefix + ":cadjpy", timeframe.period, math.log(close / close[length1]) * 100)
+mom_nzdusd = request.security(prefix + ":nzdusd", timeframe.period, math.log(close / close[length1]) * 100)
+mom_nzdchf = request.security(prefix + ":nzdchf", timeframe.period, math.log(close / close[length1]) * 100)
+mom_nzdjpy = request.security(prefix + ":nzdjpy", timeframe.period, math.log(close / close[length1]) * 100)
+mom_nzdcad = request.security(prefix + ":nzdcad", timeframe.period, math.log(close / close[length1]) * 100)
+
+mom_eur =  + mom_eurusd + mom_eurgbp + mom_eurchf + mom_eurjpy + mom_euraud + mom_eurcad + mom_eurnzd
+mom_usd =  - mom_gbpusd - mom_eurusd + mom_usdchf + mom_usdjpy - mom_audusd + mom_usdcad - mom_nzdusd  
+mom_gbp =  + mom_gbpusd - mom_eurgbp + mom_gbpchf + mom_gbpjpy + mom_gbpaud + mom_gbpcad + mom_gbpnzd
+mom_chf =  - mom_usdchf - mom_eurchf - mom_gbpchf + mom_chfjpy - mom_audchf - mom_cadchf - mom_nzdchf
+mom_jpy =  - mom_usdjpy - mom_eurjpy - mom_gbpjpy - mom_chfjpy - mom_audjpy - mom_cadjpy - mom_nzdjpy
+mom_aud =  + mom_audusd - mom_euraud - mom_gbpaud + mom_audchf + mom_audjpy + mom_audcad + mom_audnzd
+mom_cad =  - mom_usdcad - mom_eurcad - mom_gbpcad + mom_cadchf + mom_cadjpy - mom_audcad - mom_nzdcad
+mom_nzd =  + mom_nzdusd - mom_eurnzd - mom_gbpnzd + mom_nzdchf + mom_nzdjpy - mom_audnzd + mom_nzdcad
+
+
+if apply_zero_sum
+    eur_count = 7.0
+    usd_count = 7.0
+    gbp_count = 7.0
+    jpy_count = 7.0
+    chf_count = 7.0
+    aud_count = 7.0
+    cad_count = 7.0
+    nzd_count = 7.0
+    
+    norm_eur = mom_eur / eur_count
+    norm_usd = mom_usd / usd_count
+    norm_gbp = mom_gbp / gbp_count
+    norm_jpy = mom_jpy / jpy_count
+    norm_chf = mom_chf / chf_count
+    norm_aud = mom_aud / aud_count
+    norm_cad = mom_cad / cad_count
+    norm_nzd = mom_nzd / nzd_count
+    
+    norm_sum = norm_eur + norm_usd + norm_gbp + norm_jpy + norm_chf + norm_aud + norm_cad + norm_nzd
+    norm_mean = norm_sum / 8.0
+    
+    mom_eur := (norm_eur - norm_mean) * eur_count
+    mom_usd := (norm_usd - norm_mean) * usd_count
+    mom_gbp := (norm_gbp - norm_mean) * gbp_count
+    mom_jpy := (norm_jpy - norm_mean) * jpy_count
+    mom_chf := (norm_chf - norm_mean) * chf_count
+    mom_aud := (norm_aud - norm_mean) * aud_count
+    mom_cad := (norm_cad - norm_mean) * cad_count
+    mom_nzd := (norm_nzd - norm_mean) * nzd_count
+
+tsi_calc(momentum, length2, length3) =>
+    smo1 = ta.ema(momentum, length2)
+    smo2 = ta.ema(smo1, length3)
+    sma1 = ta.ema(math.abs(momentum), length2)
+    sma2 = ta.ema(sma1, length3)
+    100 * (smo2 / sma2)
+
+tsi_usd = tsi_calc(mom_usd, length2, length3)
+tsi_eur = tsi_calc(mom_eur, length2, length3)
+tsi_gbp = tsi_calc(mom_gbp, length2, length3)
+tsi_jpy = tsi_calc(mom_jpy, length2, length3)
+tsi_cad = tsi_calc(mom_cad, length2, length3)
+tsi_aud = tsi_calc(mom_aud, length2, length3)
+tsi_nzd = tsi_calc(mom_nzd, length2, length3)
+tsi_chf = tsi_calc(mom_chf, length2, length3)
+
+calc_adaptive_bands(tsi_value, lookback_len, std_mult) =>
+    mean = ta.ema(tsi_value, lookback_len)
+    stdev = ta.stdev(tsi_value, lookback_len)
+    upper = mean + (stdev * std_mult)
+    lower = mean - (stdev * std_mult)
+    [upper, lower]
+
+// 각 통화별 adaptive bands 계산
+[upper_usd, lower_usd] = calc_adaptive_bands(tsi_usd, lookback, stdev_mult1)
+[upper_eur, lower_eur] = calc_adaptive_bands(tsi_eur, lookback, stdev_mult1)
+[upper_gbp, lower_gbp] = calc_adaptive_bands(tsi_gbp, lookback, stdev_mult1)
+[upper_jpy, lower_jpy] = calc_adaptive_bands(tsi_jpy, lookback, stdev_mult1)
+[upper_cad, lower_cad] = calc_adaptive_bands(tsi_cad, lookback, stdev_mult1)
+[upper_aud, lower_aud] = calc_adaptive_bands(tsi_aud, lookback, stdev_mult1)
+[upper_nzd, lower_nzd] = calc_adaptive_bands(tsi_nzd, lookback, stdev_mult1)
+[upper_chf, lower_chf] = calc_adaptive_bands(tsi_chf, lookback, stdev_mult1)
+
+[upper_usd2, lower_usd2] = calc_adaptive_bands(tsi_usd, lookback, stdev_mult2)
+[upper_eur2, lower_eur2] = calc_adaptive_bands(tsi_eur, lookback, stdev_mult2)
+[upper_gbp2, lower_gbp2] = calc_adaptive_bands(tsi_gbp, lookback, stdev_mult2)
+[upper_jpy2, lower_jpy2] = calc_adaptive_bands(tsi_jpy, lookback, stdev_mult2)
+[upper_cad2, lower_cad2] = calc_adaptive_bands(tsi_cad, lookback, stdev_mult2)
+[upper_aud2, lower_aud2] = calc_adaptive_bands(tsi_aud, lookback, stdev_mult2)
+[upper_nzd2, lower_nzd2] = calc_adaptive_bands(tsi_nzd, lookback, stdev_mult2)
+[upper_chf2, lower_chf2] = calc_adaptive_bands(tsi_chf, lookback, stdev_mult2)
+
+[upper_usd3, lower_usd3] = calc_adaptive_bands(tsi_usd, lookback, stdev_mult3)
+[upper_eur3, lower_eur3] = calc_adaptive_bands(tsi_eur, lookback, stdev_mult3)
+[upper_gbp3, lower_gbp3] = calc_adaptive_bands(tsi_gbp, lookback, stdev_mult3)
+[upper_jpy3, lower_jpy3] = calc_adaptive_bands(tsi_jpy, lookback, stdev_mult3)
+[upper_cad3, lower_cad3] = calc_adaptive_bands(tsi_cad, lookback, stdev_mult3)
+[upper_aud3, lower_aud3] = calc_adaptive_bands(tsi_aud, lookback, stdev_mult3)
+[upper_nzd3, lower_nzd3] = calc_adaptive_bands(tsi_nzd, lookback, stdev_mult3)
+[upper_chf3, lower_chf3] = calc_adaptive_bands(tsi_chf, lookback, stdev_mult3)
+
+avg_upper = (upper_usd + upper_eur + upper_gbp + upper_jpy + upper_cad + upper_aud + upper_nzd + upper_chf) / 8
+avg_lower = (lower_usd + lower_eur + lower_gbp + lower_jpy + lower_cad + lower_aud + lower_nzd + lower_chf) / 8
+avg_upper_smooth = smooth_bands ? ta.ema(avg_upper, band_smooth_length) : avg_upper
+avg_lower_smooth = smooth_bands ? ta.ema(avg_lower, band_smooth_length) : avg_lower
+
+avg_upper2 = (upper_usd2 + upper_eur2 + upper_gbp2 + upper_jpy2 + upper_cad2 + upper_aud2 + upper_nzd2 + upper_chf2) / 8
+avg_lower2 = (lower_usd2 + lower_eur2 + lower_gbp2 + lower_jpy2 + lower_cad2 + lower_aud2 + lower_nzd2 + lower_chf2) / 8
+avg_upper_smooth2 = smooth_bands ? ta.ema(avg_upper2, band_smooth_length) : avg_upper2
+avg_lower_smooth2 = smooth_bands ? ta.ema(avg_lower2, band_smooth_length) : avg_lower2
+
+avg_upper3 = (upper_usd3 + upper_eur3 + upper_gbp3 + upper_jpy3 + upper_cad3 + upper_aud3 + upper_nzd3 + upper_chf3) / 8
+avg_lower3 = (lower_usd3 + lower_eur3 + lower_gbp3 + lower_jpy3 + lower_cad3 + lower_aud3 + lower_nzd3 + lower_chf3) / 8
+avg_upper_smooth3 = smooth_bands ? ta.ema(avg_upper3, band_smooth_length) : avg_upper3
+avg_lower_smooth3 = smooth_bands ? ta.ema(avg_lower3, band_smooth_length) : avg_lower3
+
+
+symbol = syminfo.ticker
+upperSymbol = str.upper(symbol)
+
+showUSD = str.contains(upperSymbol, "USD")
+showEUR = str.contains(upperSymbol, "EUR")
+showGBP = str.contains(upperSymbol, "GBP")
+showJPY = str.contains(upperSymbol, "JPY")
+showCAD = str.contains(upperSymbol, "CAD")
+showAUD = str.contains(upperSymbol, "AUD")
+showNZD = str.contains(upperSymbol, "NZD")
+showCHF = str.contains(upperSymbol, "CHF")
+
+slope_usd = ta.change(tsi_usd, slope_length)
+slope_eur = ta.change(tsi_eur, slope_length)
+slope_gbp = ta.change(tsi_gbp, slope_length)
+slope_jpy = ta.change(tsi_jpy, slope_length)
+slope_cad = ta.change(tsi_cad, slope_length)
+slope_aud = ta.change(tsi_aud, slope_length)
+slope_nzd = ta.change(tsi_nzd, slope_length)
+slope_chf = ta.change(tsi_chf, slope_length)
+
+plot(showUSD or show_all ? tsi_usd: na, title="USD", color=slope_usd > 0 ? color_usd : color_usd2 ,  linewidth=2)
+plot(showEUR or show_all ? tsi_eur: na, title="EUR", color=slope_eur > 0 ? color_eur : color_eur2 ,  linewidth=2)
+plot(showGBP or show_all ? tsi_gbp: na, title="GBP", color=slope_gbp > 0 ? color_gbp : color_gbp2 ,  linewidth=2)
+plot(showJPY or show_all ? tsi_jpy: na, title="JPY", color=slope_jpy > 0 ? color_jpy : color_jpy2 ,  linewidth=2)
+plot(showCAD or show_all ? tsi_cad: na, title="CAD", color=slope_cad > 0 ? color_cad : color_cad2 ,  linewidth=2)
+plot(showAUD or show_all ? tsi_aud: na, title="AUD", color=slope_aud > 0 ? color_aud : color_aud2 ,  linewidth=2)
+plot(showNZD or show_all ? tsi_nzd: na, title="NZD", color=slope_nzd > 0 ? color_nzd : color_nzd2 ,  linewidth=2)
+plot(showCHF or show_all ? tsi_chf: na, title="CHF", color=slope_chf > 0 ? color_chf : color_chf2 ,  linewidth=2)
+
+// plot(tsi_usd+tsi_eur+tsi_gbp+tsi_jpy+tsi_cad+tsi_aud+tsi_nzd+tsi_chf)
+// plot(mom_usd+mom_eur+mom_gbp+mom_jpy+mom_cad+mom_aud+mom_nzd+mom_chf)
+
+zero = hline(0, "zero", color=color.black, linestyle=hline.style_dotted, linewidth=1)
+plot(avg_upper_smooth, "1σ upper", color=color.new(color.gray, 30),  linewidth=1, linestyle = plot.linestyle_dotted,display = display.all - display.price_scale)
+plot(avg_lower_smooth, "1σ lower", color=color.new(color.gray, 30),  linewidth=1, linestyle = plot.linestyle_dotted,display = display.all - display.price_scale)
+plot(avg_upper_smooth2, "2σ upper", color=color.black, linewidth=1, linestyle = plot.linestyle_dashed,display = display.all - display.price_scale)
+plot(avg_lower_smooth2, "2σ lower", color=color.black, linewidth=1, linestyle = plot.linestyle_dashed,display = display.all - display.price_scale)
+plot(avg_upper_smooth3, "3σ upper", color=color.black, linewidth=1, linestyle = plot.linestyle_solid,display = display.all - display.price_scale)
+plot(avg_lower_smooth3, "3σ lower", color=color.black, linewidth=1, linestyle = plot.linestyle_solid,display = display.all - display.price_scale)
+
+if show_table and barstate.islast
+    currencies = array.from("EUR", "USD", "GBP", "CHF", "JPY", "AUD", "CAD", "NZD")
+    strengths = array.new<float>(8)
+    slopes = array.new<float>(8)
+    colors_arr = array.from(color_eur, color_usd, color_gbp, color_chf, color_jpy, color_aud, color_cad, color_nzd)
+    
+    array.set(strengths, 0, tsi_eur)
+    array.set(strengths, 1, tsi_usd)
+    array.set(strengths, 2, tsi_gbp)
+    array.set(strengths, 3, tsi_chf)
+    array.set(strengths, 4, tsi_jpy)
+    array.set(strengths, 5, tsi_aud)
+    array.set(strengths, 6, tsi_cad)
+    array.set(strengths, 7, tsi_nzd)
+    
+    array.set(slopes, 0, slope_eur)
+    array.set(slopes, 1, slope_usd)
+    array.set(slopes, 2, slope_gbp)
+    array.set(slopes, 3, slope_chf)
+    array.set(slopes, 4, slope_jpy)
+    array.set(slopes, 5, slope_aud)
+    array.set(slopes, 6, slope_cad)
+    array.set(slopes, 7, slope_nzd)
+
+    // Sort by strength (descending)
+    indices = array.from(0, 1, 2, 3, 4, 5, 6, 7)
+    for i = 0 to 6
+        for j = 0 to 6 - i
+            idx1 = array.get(indices, j)
+            idx2 = array.get(indices, j + 1)
+            if array.get(strengths, idx1) < array.get(strengths, idx2)
+                array.set(indices, j, idx2)
+                array.set(indices, j + 1, idx1)
+    
+    var table ranking_table = table.new(position.middle_right, 3, 9, border_width=1)
+    
+    // table.cell(ranking_table, 0, 0, "Currency", bgcolor=color.new(color.gray, 50), text_color=color.white, text_size=size.small)
+    // table.cell(ranking_table, 1, 0, "Strength %", bgcolor=color.new(color.gray, 50), text_color=color.white, text_size=size.small)
+    // table.cell(ranking_table, 2, 0, "Momentum", bgcolor=color.new(color.gray, 50), text_color=color.white, text_size=size.small)
+    
+    // Rankings
+    for i = 0 to 7
+        idx = array.get(indices, i)
+        curr_name = array.get(currencies, idx)
+        curr_strength = array.get(strengths, idx)
+        curr_slope = array.get(slopes, idx)
+        curr_color = array.get(colors_arr, idx)
+        
+        table.cell(ranking_table, 0, i + 1, curr_name, bgcolor=color.new(curr_color, 20), text_color=color.white, text_size=size.small)
+        
+        strength_text = str.tostring(curr_strength, "#.##")
+        strength_color = curr_strength > 0 ? color.new(color.green, 20) : color.new(color.red, 20)
+        table.cell(ranking_table, 1, i + 1, strength_text, bgcolor=strength_color, text_color=color.white, text_size=size.small)
+        
+        slope_text = str.tostring(curr_slope, "#.##")
+        slope_color = curr_slope > 0 ? color.new(color.green, 20) : color.new(color.red, 20)
+        table.cell(ranking_table, 2, i + 1, slope_text, bgcolor=slope_color, text_color=color.white, text_size=size.small)
+
+
+// Buy signals - crossover lower bands (oversold bounce)
+BUY_usd = ta.crossover(tsi_usd, avg_lower_smooth3) or ta.crossover(tsi_usd, avg_lower_smooth2)
+BUY_eur = ta.crossover(tsi_eur, avg_lower_smooth3) or ta.crossover(tsi_eur, avg_lower_smooth2)
+BUY_gbp = ta.crossover(tsi_gbp, avg_lower_smooth3) or ta.crossover(tsi_gbp, avg_lower_smooth2)
+BUY_jpy = ta.crossover(tsi_jpy, avg_lower_smooth3) or ta.crossover(tsi_jpy, avg_lower_smooth2)
+BUY_cad = ta.crossover(tsi_cad, avg_lower_smooth3) or ta.crossover(tsi_cad, avg_lower_smooth2)
+BUY_aud = ta.crossover(tsi_aud, avg_lower_smooth3) or ta.crossover(tsi_aud, avg_lower_smooth2)
+BUY_nzd = ta.crossover(tsi_nzd, avg_lower_smooth3) or ta.crossover(tsi_nzd, avg_lower_smooth2)
+BUY_chf = ta.crossover(tsi_chf, avg_lower_smooth3) or ta.crossover(tsi_chf, avg_lower_smooth2)
+
+// Sell signals - crossunder upper bands (overbought reversal)
+SELL_usd = ta.crossunder(tsi_usd, avg_upper_smooth3) or ta.crossunder(tsi_usd, avg_upper_smooth2)
+SELL_eur = ta.crossunder(tsi_eur, avg_upper_smooth3) or ta.crossunder(tsi_eur, avg_upper_smooth2)
+SELL_gbp = ta.crossunder(tsi_gbp, avg_upper_smooth3) or ta.crossunder(tsi_gbp, avg_upper_smooth2)
+SELL_jpy = ta.crossunder(tsi_jpy, avg_upper_smooth3) or ta.crossunder(tsi_jpy, avg_upper_smooth2)
+SELL_cad = ta.crossunder(tsi_cad, avg_upper_smooth3) or ta.crossunder(tsi_cad, avg_upper_smooth2)
+SELL_aud = ta.crossunder(tsi_aud, avg_upper_smooth3) or ta.crossunder(tsi_aud, avg_upper_smooth2)
+SELL_nzd = ta.crossunder(tsi_nzd, avg_upper_smooth3) or ta.crossunder(tsi_nzd, avg_upper_smooth2)
+SELL_chf = ta.crossunder(tsi_chf, avg_upper_smooth3) or ta.crossunder(tsi_chf, avg_upper_smooth2)
+
+// Combined alerts - 8 total (one per currency)
+alertcondition(BUY_usd or SELL_usd, "USD Signal", "USD Signal")
+alertcondition(BUY_eur or SELL_eur, "EUR Signal", "EUR Signal")
+alertcondition(BUY_gbp or SELL_gbp, "GBP Signal", "GBP Signal")
+alertcondition(BUY_jpy or SELL_jpy, "JPY Signal", "JPY Signal")
+alertcondition(BUY_cad or SELL_cad, "CAD Signal", "CAD Signal")
+alertcondition(BUY_aud or SELL_aud, "AUD Signal", "AUD Signal")
+alertcondition(BUY_nzd or SELL_nzd, "NZD Signal", "NZD Signal")
+alertcondition(BUY_chf or SELL_chf, "CHF Signal", "CHF Signal")
